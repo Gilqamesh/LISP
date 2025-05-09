@@ -26,22 +26,23 @@ void memory_test() {
     assert(is_real(obj_real));
 
     const char* test_symbol_str = "test_string";
-    obj_t* obj_symbol = memory_symbol(&memory, str_create_cstr(test_symbol_str));
+    str_t s = str_create("%s", test_symbol_str);
+    obj_t* obj_symbol = memory_symbol(&memory, s);
     assert(is_symbol(obj_symbol));
     assert(str_is_equal_cstr(get_symbol(obj_symbol), test_symbol_str));
 
     const char* test_string_str = "test_string";
-    obj_t* obj_string = memory_string(&memory, str_create_cstr(test_string_str));
+    obj_t* obj_string = memory_string(&memory, str_create("%s", test_string_str));
     assert(is_string(obj_string));
     assert(str_is_equal_cstr(get_string(obj_string), test_string_str));
 
     const char* test_primitive_str = "test_primitive";
-    obj_t* obj_primitive = memory_primitive(&memory, str_create_cstr(test_primitive_str), test_primitive);
+    obj_t* obj_primitive = memory_primitive(&memory, str_create("%s", test_primitive_str), test_primitive);
     assert(is_primitive(obj_primitive));
     assert(str_is_equal_cstr(get_primitive_name(obj_primitive), test_primitive_str));
 
     const char* test_macro_str = "test_macro";
-    obj_t* obj_macro = memory_macro(&memory, str_create_cstr(test_macro_str), test_macro);
+    obj_t* obj_macro = memory_macro(&memory, str_create("%s", test_macro_str), test_macro);
     assert(is_macro(obj_macro));
     assert(str_is_equal_cstr(get_macro_name(obj_macro), test_macro_str));
 

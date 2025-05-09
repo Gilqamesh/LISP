@@ -9,6 +9,14 @@ void test_obj() {
     }
 }
 
+void test_obj_error() {
+    obj_error_t _;
+    str_t _message = str_create("test error");
+    obj_error_init(&_, _message);
+    assert(is_error((obj_t*)&_));
+    assert(str_is_equal_str(get_error_message((obj_t*)&_), &_message));
+}
+
 void test_obj_eof() {
     obj_eof_t _;
     obj_eof_init(&_);
@@ -54,7 +62,7 @@ void test_obj_real() {
 void test_obj_symbol() {
     obj_symbol_t _;
     const char* _symbol_str = "test_symbol";
-    obj_symbol_init(&_, str_create_cstr(_symbol_str));
+    obj_symbol_init(&_, str_create("%s", _symbol_str));
     assert(is_symbol((obj_t*)&_));
     assert(str_is_equal_cstr(get_symbol((obj_t*)&_), _symbol_str));
 }
@@ -62,7 +70,7 @@ void test_obj_symbol() {
 void test_obj_string() {
     obj_string_t _;
     const char* _string = "test_string";
-    obj_string_init(&_, str_create_cstr(_string));
+    obj_string_init(&_, str_create("%s", _string));
     assert(is_string((obj_t*)&_));
     assert(str_is_equal_cstr(get_string((obj_t*)&_), _string));
 }
@@ -75,7 +83,7 @@ void test_obj_primitive() {
     obj_primitive_t _;
     primitive_t _primitive = primitive_test;
     const char* _primitive_name = "test_primitive";
-    obj_primitive_init(&_, str_create_cstr(_primitive_name), _primitive);
+    obj_primitive_init(&_, str_create("%s", _primitive_name), _primitive);
     assert(is_primitive((obj_t*)&_));
     assert(get_primitive((obj_t*)&_) == _primitive);
     assert(str_is_equal_cstr(get_primitive_name((obj_t*)&_), _primitive_name));
@@ -88,7 +96,7 @@ void test_obj_macro() {
     obj_macro_t _;
     macro_t _macro = primitive_test;
     const char* _macro_name = "test_macro";
-    obj_macro_init(&_, str_create_cstr(_macro_name), _macro);
+    obj_macro_init(&_, str_create("%s", _macro_name), _macro);
     assert(is_macro((obj_t*)&_));
     assert(get_macro((obj_t*)&_) == _macro);
     assert(str_is_equal_cstr(get_macro_name((obj_t*)&_), _macro_name));
@@ -109,6 +117,7 @@ void test_obj_file() {
 
 void obj_test() {
     test_obj();
+    test_obj_error();
     test_obj_eof();
     test_obj_nil();
     test_obj_void();

@@ -4,9 +4,11 @@
 # include "str.h"
 
 typedef enum obj_type_t {
+  OBJ_TYPE_ERROR,
   OBJ_TYPE_EOF,
   OBJ_TYPE_NIL,
   OBJ_TYPE_VOID,
+  OBJ_TYPE_BOOL,
   OBJ_TYPE_CONS,
   OBJ_TYPE_REAL,
   OBJ_TYPE_SYMBOL,
@@ -24,6 +26,15 @@ typedef struct obj_t {
 void obj_init(obj_t* obj, obj_type_t obj_type);
 void obj_to_string(obj_t* obj, str_t* str);
 obj_type_t type(obj_t* obj);
+
+typedef struct obj_error_t {
+  obj_t base;
+  str_t message;
+} obj_error_t;
+void obj_error_init(obj_error_t* obj_error, str_t message);
+void obj_error_to_string(obj_error_t* obj_error, str_t* str);
+bool is_error(obj_t* obj);
+const str_t* get_error_message(obj_t* obj);
 
 typedef struct obj_eof_t {
   obj_t base;
@@ -45,6 +56,15 @@ typedef struct obj_void_t {
 void obj_void_init(obj_void_t* obj_void);
 void obj_void_to_string(obj_void_t* obj_void, str_t* str);
 bool is_void(obj_t* obj);
+
+typedef struct obj_bool_t {
+  obj_t base;
+  bool value;
+} obj_bool_t;
+void obj_bool_init(obj_bool_t* obj_bool, bool value);
+void obj_bool_to_string(obj_bool_t* obj_bool, str_t* str);
+bool is_bool(obj_t* obj);
+bool get_bool(obj_t* obj);
 
 typedef struct obj_cons_t {
   obj_t base;

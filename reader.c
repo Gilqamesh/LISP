@@ -80,7 +80,7 @@ bool reader_is_whitespace(reader_t* self, char c) {
 }
 
 obj_t* reader_default_function(reader_t* self, FILE* file, str_t lexeme) {
-    while (reader_is_at_end(self, file)) {
+    while (!reader_is_at_end(self, file)) {
         char c = reader_get_char(self, file);
         size_t child_index = (unsigned char)c;
         if (sizeof(self->root.children) / sizeof(self->root.children[0]) <= child_index) {
@@ -90,7 +90,7 @@ obj_t* reader_default_function(reader_t* self, FILE* file, str_t lexeme) {
             reader_unget_char(self, file, c);
             break;
         }
-        str_push_char(&lexeme, c);
+        str_push(&lexeme, "%c", c);
     }
 
     const size_t lexeme_size = str_size(&lexeme); 
@@ -125,11 +125,11 @@ obj_t* reader_read(reader_t* self, FILE* file) {
     }
 
     reader_node_t *node = &self->root;
-    str_t lexeme;
+    str_t lexeme = str();
     reader_function_t reader_function = 0;
-    while (node && reader_is_at_end(self, file)) {
+    while (node && !reader_is_at_end(self, file)) {
         char c = reader_get_char(self, file);
-        str_push_char(&lexeme, c);
+        str_push(&lexeme, "%c", c);
         size_t child_index = (unsigned char)c;
         if (sizeof(node->children) / sizeof(node->children[0]) <= child_index) {
             assert(0);
@@ -143,6 +143,10 @@ obj_t* reader_read(reader_t* self, FILE* file) {
 
     obj_t* result = 0;
     if (reader_function) {
+        while (str_size(&lexeme)) {
+            char c = str_pop(&lexeme);
+            reader_unget_char(self, file, c);
+        }
         result = reader_function(self, file);
     } else {
         result = reader_default_function(self, file, lexeme);

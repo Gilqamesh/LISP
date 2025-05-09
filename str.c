@@ -1,14 +1,5 @@
 #include "str.h"
 
-static void str_init(str_t* self, size_t size) {
-    assert(size);
-    self->data = (char*)malloc(size);
-    assert(self->data);
-    self->top = 0;
-    self->size = size;
-    self->data[0] = '\0';
-}
-
 static void str_grow(str_t* self) {
     if (self->size <= self->top + 1) {
         self->size *= 2;
@@ -25,31 +16,49 @@ static void str_shrink(str_t* self) {
     }
 }
 
-str_t str_create_char(char c) {
+static void str_push_char(str_t* self, char c) {
+    str_grow(self);
+    self->data[self->top++] = c;
+    self->data[self->top] = '\0';
+}
+
+static void str_vpush(str_t* self, const char* format, va_list args) {
+    str_grow(self);
+    char buffer[1024];
+    int len = vsnprintf(buffer, sizeof(buffer), format, args);
+    assert(0 <= len);
+    for (int i = 0; i < len; i++) {
+        str_push_char(self, buffer[i]);
+    }
+}
+
+str_t str() {
     str_t self;
-    str_init(&self, 2);
-    str_push_char(&self, c);
+    self.size = 32;
+    self.data = (char*)malloc(self.size);
+    assert(self.data);
+    self.top = 0;
+    self.data[0] = '\0';
     return self;
 }
 
-str_t str_create_cstr(const char* cstr) {
-    str_t self;
-    str_init(&self, strlen(cstr) + 1);
-    str_push_cstr(&self, cstr);
+str_t str_create(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    str_t result = str_vcreate(format, args);
+    va_end(args);
+    return result;
+}
+
+str_t str_vcreate(const char* format, va_list args) {
+    str_t self = str();
+    str_vpush(&self, format, args);
     return self;
 }
 
-str_t str_create_str(const str_t* str) {
-    str_t self;
-    str_init(&self, str_size(str) + 1);
-    str_push_str(&self, str);
-    return self;
-}
-
-str_t str_create_real(double real) {
-    str_t self;
-    str_init(&self, 32);
-    str_push_real(&self, real);
+str_t str_create_str(const str_t* s) {
+    str_t self = str();
+    str_push_str(&self, s);
     return self;
 }
 
@@ -60,23 +69,16 @@ void str_destroy(str_t* self) {
     self->size = 0;
 }
 
-void str_push_char(str_t* self, char c) {
-    str_grow(self);
-    assert(self->top < self->size);
-    self->data[self->top++] = c;
-    assert(self->top < self->size);
-    self->data[self->top] = '\0';
-}
-
-void str_push_cstr(str_t* self, const char* str) {
-    while (*str) {
-        str_push_char(self, *str++);
-    }
+void str_push(str_t* self, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    str_vpush(self, format, args);
+    va_end(args);
 }
 
 void str_push_str(str_t* self, const str_t* str) {
     const size_t size_str = str_size(str);
-    for (size_t i = 0; i < size_str; i++) {
+    for (size_t i = 0; i < size_str; ++i) {
         str_push_char(self, str_at(str, i));
     }
 }
@@ -87,12 +89,6 @@ char str_pop(str_t* self) {
     self->data[self->top] = '\0';
     str_shrink(self);
     return result;
-}
-
-void str_push_real(str_t* self, double real) {
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%f", real);
-    str_push_cstr(self, buffer);
 }
 
 void str_clear(str_t* self) {

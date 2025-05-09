@@ -9,16 +9,14 @@ typedef struct str_t {
     size_t size;
 } str_t;
 
-str_t str_create_char(char c);
-str_t str_create_cstr(const char* cstr);
+str_t str();
+str_t str_create(const char* format, ...);
+str_t str_vcreate(const char* format, va_list args);
 str_t str_create_str(const str_t* str);
-str_t str_create_real(double real);
 void str_destroy(str_t* self);
 
-void str_push_char(str_t* self, char c);
-void str_push_cstr(str_t* self, const char* cstr);
-void str_push_real(str_t* self, double real);
-void str_push_str(str_t* self, const str_t* str);
+void str_push(str_t* self, const char* format, ...);
+void str_push_str(str_t* self, const str_t* s);
 char str_pop(str_t* self);
 void str_clear(str_t* self);
 

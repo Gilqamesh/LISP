@@ -8,5 +8,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <ctype.h>
+# include <stdarg.h>
+# include <stdint.h>
 
 # endif // LIBC_H
