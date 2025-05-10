@@ -3,6 +3,7 @@
 #include "str_test.h"
 #include "hasher_test.h"
 #include "reader_test.h"
+#include "repl_test.h"
 
 int main() {
     memory_test();
@@ -10,6 +11,7 @@ int main() {
     str_test();
     hasher_test();
     reader_test();
+    repl_test();
 
-    return 1;
+    return 0;
 }

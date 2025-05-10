@@ -31,7 +31,7 @@ hasher_t hasher(
 );
 void hasher_destroy(hasher_t* self);
 
-hasher_entry_t* hasher_get(const hasher_t* self, const void* key);
+hasher_entry_t* hasher_find(const hasher_t* self, const void* key);
 bool hasher_is_empty(hasher_t* self);
 size_t hasher_size(const hasher_t* self);
 double hasher_load_factor(const hasher_t* self);

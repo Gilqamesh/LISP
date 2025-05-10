@@ -1,4 +1,91 @@
 #include "reader.h"
+#include "lisp.h"
+
+static obj_t* reader_skip_whitespaces(reader_t* self, FILE* file);
+static obj_t* reader_double_quote(reader_t* self, FILE* file);
+static obj_t* reader_quote(reader_t* self, FILE* file);
+static obj_t* reader_qauasiquote(reader_t* self, FILE* file);
+static obj_t* reader_comma(reader_t* self, FILE* file);
+static obj_t* reader_right_parent(reader_t* self, FILE* file);
+static obj_t* reader_left_parent(reader_t* self, FILE* file);
+static obj_t* reader_true(reader_t* self, FILE* file);
+static obj_t* reader_false(reader_t* self, FILE* file);
+static obj_t* reader_multiline_comment(reader_t* self, FILE* file);
+
+static obj_t* reader_skip_whitespaces(reader_t* self, FILE* file) {
+    while (!reader_is_at_end(self, file) && reader_is_whitespace(self, reader_peek(self, file))) {
+        reader_get_char(self, file);
+    }
+    return memory_void(self->memory);
+}
+
+static obj_t* reader_double_quote(reader_t* self, FILE* file) {
+    str_t lexeme = str();
+    while (!reader_is_at_end(self, file)) {
+        char c = reader_get_char(self, file);
+        if (c == '"') {
+            return memory_string(self->memory, lexeme);
+        }
+        str_push(&lexeme, "%c", c);
+    }
+    str_t error_message = str_create("Unterminated string literal: ");
+    str_push_str(&error_message, &lexeme);
+    return memory_error(self->memory, error_message);
+}
+
+static obj_t* reader_quote(reader_t* self, FILE* file) {
+    list(self->memory, memory_symbol(self->memory, str_create("quote")), reader_read(self, file));
+}
+
+static obj_t* reader_qauasiquote(reader_t* self, FILE* file) {
+    list(self->memory, memory_symbol(self->memory, str_create("quasiquote")), reader_read(self, file));
+}
+
+static obj_t* reader_comma(reader_t* self, FILE* file) {
+    if (reader_is_at_end(self, file)) {
+        return memory_error(self->memory, str_create("Unexpected end of file after comma"));
+    }
+    char c = reader_get_char(self, file);
+    switch (c) {
+        case '@': {
+            return list(self->memory, memory_symbol(self->memory, str_create("unquote-splicing")), reader_read(self, file));
+        } break ;
+        default: {
+            reader_unget_char(self, file, c);
+            return list(self->memory, memory_symbol(self->memory, str_create("unquote")), reader_read(self, file));
+        }
+    }
+}
+
+static obj_t* reader_right_parent(reader_t* self, FILE* file) {
+    return memory_symbol(self->memory, str_create(")"));
+}
+
+static obj_t* reader_left_parent(reader_t* self, FILE* file) {
+    if (reader_is_at_end(self, file)) {
+        return memory_error(self->memory, str_create("Unexpected end of file after left parenthesis"));
+    }
+
+    obj_t* obj = reader_read(self, file);
+    if (is_eq(obj, memory_symbol(self->memory, str_create(")")))) {
+        return memory_nil(self->memory);
+    }
+
+    return memory_cons(self->memory, obj, reader_left_parent(self, file));
+}
+
+static obj_t* reader_true(reader_t* self, FILE* file) {
+    return memory_bool(self->memory, true);
+}
+
+static obj_t* reader_false(reader_t* self, FILE* file) {
+    return memory_bool(self->memory, false);
+}
+
+static obj_t* reader_multiline_comment(reader_t* self, FILE* file) {
+    size_t depth = 1;
+    return 0;
+}
 
 void reader_node_init(reader_node_t* self) {
     memset(self, 0, sizeof(reader_node_t));
@@ -88,7 +175,7 @@ obj_t* reader_default_function(reader_t* self, FILE* file, str_t lexeme) {
         }
         if (c == ')' || self->root.children[child_index]) {
             reader_unget_char(self, file, c);
-            break;
+            break ;
         }
         str_push(&lexeme, "%c", c);
     }
@@ -157,4 +244,20 @@ obj_t* reader_read(reader_t* self, FILE* file) {
     }
 
     return result;
+}
+
+void reader_register_reader_macros(reader_t* self) {
+    for (size_t i = 0; i < sizeof(self->root.children) / sizeof(self->root.children[0]); i++) {
+        if (reader_is_whitespace(self, (char)i)) {
+            reader_register_reader_macro_char(self, (char)i, &reader_skip_whitespaces);
+        }
+    }
+    reader_register_reader_macro_str(self, "\"", &reader_double_quote);
+    reader_register_reader_macro_str(self, "'", &reader_quote);
+    reader_register_reader_macro_str(self, "`", &reader_qauasiquote);
+    reader_register_reader_macro_str(self, ",", &reader_comma);
+    reader_register_reader_macro_str(self, ")", &reader_right_parent);
+    reader_register_reader_macro_str(self, "(", &reader_left_parent);
+    reader_register_reader_macro_str(self, "#t", &reader_true);
+    reader_register_reader_macro_str(self, "#f", &reader_false);
 }

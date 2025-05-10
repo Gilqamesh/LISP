@@ -38,7 +38,7 @@ void hasher_test() {
     hasher_insert(&set, &key2);
     assert(hasher_size(&set) == 2);
 
-    hasher_entry_t* entry = hasher_get(&set, &key1);
+    hasher_entry_t* entry = hasher_find(&set, &key1);
     assert(entry);
     assert(entry->type == HASHER_ENTRY_TYPE_FILLED);
     assert(str_is_equal_str((str_t*)entry->entry, &key1));
@@ -73,7 +73,7 @@ void hasher_test() {
         keys[i] = str_create("key%zu", i);
         hasher_insert(&set, keys + i);
         assert(hasher_size(&set) == i + 1);
-        hasher_entry_t* entry = hasher_get(&set, keys + i);
+        hasher_entry_t* entry = hasher_find(&set, keys + i);
         assert(entry);
         assert(entry->type == HASHER_ENTRY_TYPE_FILLED);
         assert(str_is_equal_str((str_t*)entry->entry, keys + i));

@@ -19,6 +19,7 @@ static void str_shrink(str_t* self) {
 static void str_push_char(str_t* self, char c) {
     str_grow(self);
     self->data[self->top++] = c;
+    assert(self->top < self->size);
     self->data[self->top] = '\0';
 }
 

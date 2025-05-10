@@ -6,7 +6,7 @@ static hasher_t hasher_create(
     const void* (*key_function)(const void* entry),
     size_t size
 );
-static hasher_entry_t* hasher_find(const hasher_t* self, const void* key);
+static hasher_entry_t* hasher_find_internal(const hasher_t* self, const void* key);
 static void hasher_change_size(hasher_t* self, size_t new_size);
 static void hasher_grow(hasher_t* self);
 static void hasher_shrink(hasher_t* self);
@@ -33,7 +33,7 @@ static hasher_t hasher_create(
     return self;
 }
 
-static hasher_entry_t* hasher_find(const hasher_t* self, const void* key) {
+static hasher_entry_t* hasher_find_internal(const hasher_t* self, const void* key) {
     size_t hash = self->hash_function(key);
     size_t index = hash % self->size;
     size_t start = index;
@@ -109,8 +109,8 @@ void hasher_destroy(hasher_t* self) {
     self->fill = 0;
 }
 
-hasher_entry_t* hasher_get(const hasher_t* self, const void* key) {
-    hasher_entry_t* entry = hasher_find(self, key);
+hasher_entry_t* hasher_find(const hasher_t* self, const void* key) {
+    hasher_entry_t* entry = hasher_find_internal(self, key);
     if (entry && entry->type == HASHER_ENTRY_TYPE_FILLED) {
         return entry;
     }
@@ -134,7 +134,7 @@ double hasher_load_factor(const hasher_t* self) {
 
 hasher_entry_t* hasher_insert(hasher_t* self, const void* entry) {
     hasher_grow(self);
-    hasher_entry_t* hasher_entry = hasher_find(self, self->key_function(entry));
+    hasher_entry_t* hasher_entry = hasher_find_internal(self, self->key_function(entry));
     if (hasher_entry && hasher_entry->type != HASHER_ENTRY_TYPE_FILLED) {
         hasher_entry->entry = entry;
         hasher_entry->type = HASHER_ENTRY_TYPE_FILLED;
@@ -146,7 +146,7 @@ hasher_entry_t* hasher_insert(hasher_t* self, const void* entry) {
 }
 
 bool hasher_remove(hasher_t* self, const void* key) {
-    hasher_entry_t* hasher_entry = hasher_find(self, key);
+    hasher_entry_t* hasher_entry = hasher_find_internal(self, key);
     if (hasher_entry && hasher_entry->type == HASHER_ENTRY_TYPE_FILLED) {
         hasher_entry->type = HASHER_ENTRY_TYPE_TOMBSTONE;
         --self->fill;

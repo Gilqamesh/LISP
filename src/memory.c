@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "err.h"
 
 static size_t interned_entries_key_hash(const void* key);
 static int interned_entries_key_compare(const void* key1, const void* key2);
@@ -28,10 +29,15 @@ static const void* interned_entries_entry_key(const void* entry) {
 
 static interned_entry_t* interned_entries_insert(memory_t* self, str_t s, obj_t* obj) {
     if (self->interned_entries_top == self->interned_entries_size) {
+        size_t old_size = self->interned_entries_size;
         self->interned_entries_size *= 2;
         self->interned_entries = realloc(self->interned_entries, sizeof(*self->interned_entries) * self->interned_entries_size);
+        for (size_t i = old_size; i < self->interned_entries_size; ++i) {
+            self->interned_entries[i] = malloc(sizeof(interned_entry_t));
+            self->interned_entries[i]->index = i;
+        }
     }
-    interned_entry_t* interned_entry = &self->interned_entries[self->interned_entries_top];
+    interned_entry_t* interned_entry = self->interned_entries[self->interned_entries_top];
     interned_entry->s = s;
     interned_entry->obj = obj;
     interned_entry->index = self->interned_entries_top;
@@ -42,8 +48,8 @@ static interned_entry_t* interned_entries_insert(memory_t* self, str_t s, obj_t*
 static void interned_entries_remove(memory_t* self, size_t index) {
     assert(index < self->interned_entries_top);
     self->interned_entries[index] = self->interned_entries[self->interned_entries_top - 1];
-    self->interned_entries[index].index = index;
-    str_destroy(&self->interned_entries[self->interned_entries_top - 1].s);
+    self->interned_entries[index]->index = index;
+    str_destroy(&self->interned_entries[self->interned_entries_top - 1]->s);
     --self->interned_entries_top;
 
     const double load_factor = (double)self->interned_entries_top / (double)self->interned_entries_size;
@@ -81,6 +87,10 @@ void memory_init(memory_t* self) {
     self->interned_entries_size = 16;
     self->interned_entries_top = 0;
     self->interned_entries = malloc(sizeof(*self->interned_entries) * self->interned_entries_size);
+    for (size_t i = 0; i < self->interned_entries_size; ++i) {
+        self->interned_entries[i] = malloc(sizeof(interned_entry_t));
+        self->interned_entries[i]->index = i;
+    }
     self->interned_symbols = hasher(
         interned_entries_key_hash,
         interned_entries_key_compare,
@@ -95,7 +105,7 @@ void memory_destroy(memory_t* self) {
     free(self->obj_true);
     free(self->obj_false);
     for (size_t i = 0; i < self->interned_entries_top; ++i) {
-        str_destroy(&self->interned_entries[i].s);
+        str_destroy(&self->interned_entries[i]->s);
     }
     hasher_destroy(&self->interned_symbols);
 }
@@ -142,9 +152,10 @@ obj_t* memory_real(memory_t* self, double real) {
 }
 
 obj_t* memory_symbol(memory_t* self, str_t symbol) {
-    hasher_entry_t* entry = hasher_get(&self->interned_symbols, &symbol);
+    hasher_entry_t* entry = hasher_find(&self->interned_symbols, &symbol);
     if (entry) {
-        return (obj_t*) entry->entry;
+        interned_entry_t* interned_entry = (interned_entry_t*) entry->entry;
+        return interned_entry->obj;
     }
     obj_symbol_t* obj_symbol = (obj_symbol_t*)malloc(sizeof(obj_symbol_t));
     self->total_allocated += sizeof(obj_symbol_t);
@@ -160,6 +171,81 @@ obj_t* memory_string(memory_t* self, str_t string) {
     return (obj_t*) obj_string;
 }
 
+obj_t* memory_file(memory_t* self, FILE* file) {
+    obj_file_t* obj_file = (obj_file_t*)malloc(sizeof(obj_file_t));
+    self->total_allocated += sizeof(obj_file_t);
+    obj_file_init(obj_file, file);
+    return (obj_t*) obj_file;
+}
+
+obj_t* memory_env(memory_t* self) {
+    obj_env_t* obj_env = (obj_env_t*)malloc(sizeof(obj_env_t));
+    self->total_allocated += sizeof(obj_env_t);
+    hasher_t bindings = hasher(
+        interned_entries_key_hash,
+        interned_entries_key_compare,
+        interned_entries_entry_key
+    );
+    obj_env_init(obj_env, 0, bindings);
+    return (obj_t*) obj_env;
+}
+
+obj_t* get_env_binding(memory_t* memory, obj_t* obj, obj_t* key) {
+    assert(is_env(obj));
+    assert(is_symbol(key));
+    hasher_entry_t* entry = hasher_find(get_env_bindings(obj), get_symbol(key));
+    if (entry) {
+        interned_entry_t* interned_entry = (interned_entry_t*) entry->entry;
+        return interned_entry->obj;
+    }
+    obj_t* parent = get_env_parent(obj);
+    if (parent) {
+        return get_env_binding(memory, parent, key);
+    }
+    return 0;
+}
+
+obj_t* set_env_binding(memory_t* memory, obj_t* obj, obj_t* key, obj_t* value) {
+    assert(is_env(obj));
+    assert(is_symbol(key));
+    assert(value);
+    hasher_entry_t* entry = hasher_find(get_env_bindings(obj), get_symbol(key));
+    if (entry) {
+        interned_entry_t* interned_entry = (interned_entry_t*) entry->entry;
+        interned_entry->obj = value;
+        return value;
+    }
+
+    obj_t* parent = get_env_parent(obj);
+    if (parent) {
+        return set_env_binding(memory, parent, key, value);
+    }
+    return err(str_create("set_env_binding: Binding not found"), obj, key, value);
+}
+
+obj_t* define_env_binding(memory_t* memory, obj_t* obj, obj_t* key, obj_t* value) {
+    assert(is_env(obj));
+    assert(is_symbol(key));
+    assert(value);
+    hasher_entry_t* entry = hasher_find(get_env_bindings(obj), get_symbol(key));
+    if (entry) {
+        interned_entry_t* interned_entry = (interned_entry_t*) entry->entry;
+        interned_entry->obj = value;
+        return value;
+    }
+
+    interned_entry_t* interned_entry = interned_entries_insert(memory, str_create_str(get_symbol(key)), value);
+    hasher_insert(get_env_bindings(obj), interned_entry);
+    return value;
+}
+
+obj_t* memory_macro(memory_t* self, obj_t* params, obj_t* body) {
+    obj_macro_t* obj_macro = (obj_macro_t*)malloc(sizeof(obj_macro_t));
+    self->total_allocated += sizeof(obj_macro_t);
+    obj_macro_init(obj_macro, params, body);
+    return (obj_t*) obj_macro;
+}
+
 obj_t* memory_primitive(memory_t* self, str_t name, primitive_t primitive) {
     obj_primitive_t* obj_primitive = (obj_primitive_t*)malloc(sizeof(obj_primitive_t));
     self->total_allocated += sizeof(obj_primitive_t);
@@ -167,16 +253,9 @@ obj_t* memory_primitive(memory_t* self, str_t name, primitive_t primitive) {
     return (obj_t*) obj_primitive;
 }
 
-obj_t* memory_macro(memory_t* self, str_t name, macro_t macro) {
-    obj_macro_t* obj_macro = (obj_macro_t*)malloc(sizeof(obj_macro_t));
-    self->total_allocated += sizeof(obj_macro_t);
-    obj_macro_init(obj_macro, name, macro);
-    return (obj_t*) obj_macro;
-}
-
-obj_t* memory_file(memory_t* self, FILE* file) {
-    obj_file_t* obj_file = (obj_file_t*)malloc(sizeof(obj_file_t));
-    self->total_allocated += sizeof(obj_file_t);
-    obj_file_init(obj_file, file);
-    return (obj_t*) obj_file;
+obj_t* memory_compound(memory_t* self, obj_t* params, obj_t* body, obj_t* env) {
+    obj_compound_t* obj_compound = (obj_compound_t*)malloc(sizeof(obj_compound_t));
+    self->total_allocated += sizeof(obj_compound_t);
+    obj_compound_init(obj_compound, params, body, env);
+    return (obj_t*) obj_compound;
 }

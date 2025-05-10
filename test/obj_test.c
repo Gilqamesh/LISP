@@ -75,34 +75,12 @@ void test_obj_string() {
     assert(str_is_equal_cstr(get_string((obj_t*)&_), _string));
 }
 
-obj_t* primitive_test(obj_t* self, obj_t* args) {
+obj_t* primitive_test(memory_t* memory, obj_t* op, obj_t* args, obj_t* env) {
     return args;
 }
 
-void test_obj_primitive() {
-    obj_primitive_t _;
-    primitive_t _primitive = primitive_test;
-    const char* _primitive_name = "test_primitive";
-    obj_primitive_init(&_, str_create("%s", _primitive_name), _primitive);
-    assert(is_primitive((obj_t*)&_));
-    assert(get_primitive((obj_t*)&_) == _primitive);
-    assert(str_is_equal_cstr(get_primitive_name((obj_t*)&_), _primitive_name));
-    obj_t* _args = (obj_t*)0x1234;
-    obj_t* _result = _primitive((obj_t*)&_, _args);
-    assert(_result == _args);
-}
-
-void test_obj_macro() {
-    obj_macro_t _;
-    macro_t _macro = primitive_test;
-    const char* _macro_name = "test_macro";
-    obj_macro_init(&_, str_create("%s", _macro_name), _macro);
-    assert(is_macro((obj_t*)&_));
-    assert(get_macro((obj_t*)&_) == _macro);
-    assert(str_is_equal_cstr(get_macro_name((obj_t*)&_), _macro_name));
-    obj_t* _args = (obj_t*)0x1234;
-    obj_t* _result = _macro((obj_t*)&_, _args);
-    assert(_result == _args);
+obj_t* macro_test(memory_t* memory, obj_t* op, obj_t* args, obj_t* env) {
+    return args;
 }
 
 void test_obj_file() {
@@ -125,7 +103,5 @@ void obj_test() {
     test_obj_real();
     test_obj_symbol();
     test_obj_string();
-    test_obj_primitive();
-    test_obj_macro();
     test_obj_file();
 }

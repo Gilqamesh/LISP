@@ -1,14 +1,6 @@
 #include "memory_test.h"
 #include "memory.h"
 
-obj_t* test_primitive(obj_t* self, obj_t* args) {
-    return self;
-}
-
-obj_t* test_macro(obj_t* self, obj_t* args) {
-    return self;
-}
-
 void memory_test() {
     memory_t memory;
     memory_init(&memory);
@@ -35,16 +27,6 @@ void memory_test() {
     obj_t* obj_string = memory_string(&memory, str_create("%s", test_string_str));
     assert(is_string(obj_string));
     assert(str_is_equal_cstr(get_string(obj_string), test_string_str));
-
-    const char* test_primitive_str = "test_primitive";
-    obj_t* obj_primitive = memory_primitive(&memory, str_create("%s", test_primitive_str), test_primitive);
-    assert(is_primitive(obj_primitive));
-    assert(str_is_equal_cstr(get_primitive_name(obj_primitive), test_primitive_str));
-
-    const char* test_macro_str = "test_macro";
-    obj_t* obj_macro = memory_macro(&memory, str_create("%s", test_macro_str), test_macro);
-    assert(is_macro(obj_macro));
-    assert(str_is_equal_cstr(get_macro_name(obj_macro), test_macro_str));
 
     FILE* file = fopen("test.txt", "w");
     assert(file != NULL);

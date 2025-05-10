@@ -35,4 +35,6 @@ bool reader_is_whitespace(reader_t* self, char c);
 
 obj_t* reader_read(reader_t* self, FILE* file);
 
+void reader_register_reader_macros(reader_t* self);
+
 #endif // READER_H
