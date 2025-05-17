@@ -1,11 +1,48 @@
 #include "obj.h"
 
+const char* obj_type_to_string(obj_type_t type) {
+    switch (type) {
+    case OBJ_TYPE_LISP_TYPE: return "lisp-type";
+    case OBJ_TYPE_ERROR: return "error";
+    case OBJ_TYPE_EOF: return "eof";
+    case OBJ_TYPE_NIL: return "nil";
+    case OBJ_TYPE_VOID: return "void";
+    case OBJ_TYPE_POINTER: return "pointer";
+    case OBJ_TYPE_BOOL: return "bool";
+    case OBJ_TYPE_CONS: return "cons";
+    case OBJ_TYPE_REAL: return "real";
+    case OBJ_TYPE_SYMBOL: return "symbol";
+    case OBJ_TYPE_STRING: return "string";
+    case OBJ_TYPE_FILE: return "file";
+    case OBJ_TYPE_ENV: return "env";
+    case OBJ_TYPE_FFI: return "ffi";
+    case OBJ_TYPE_MACRO: return "macro";
+    case OBJ_TYPE_FUNCTION_PRIMITIVE: return "function-primitive";
+    case OBJ_TYPE_FUNCTION_COMPOUND: return "function-compound";
+    default: assert(0 && "Unknown object type");
+    }
+}
+
 void obj_init(obj_t* obj, obj_type_t obj_type) {
     obj->type = obj_type;
 }
 
 obj_type_t type(const obj_t* obj) {
     return obj->type;
+}
+
+void obj_lisp_type_init(obj_lisp_type_t* obj_lisp_type, obj_type_t type) {
+    obj_init(&obj_lisp_type->base, OBJ_TYPE_LISP_TYPE);
+    obj_lisp_type->type = type;
+}
+
+bool is_lisp_type(const obj_t* obj) {
+    return type(obj) == OBJ_TYPE_LISP_TYPE;
+}
+
+obj_type_t get_lisp_type(const obj_t* obj) {
+    assert(is_lisp_type(obj));
+    return ((obj_lisp_type_t*)obj)->type;
 }
 
 void obj_error_init(obj_error_t* obj_error, str_t message) {
@@ -44,6 +81,20 @@ void obj_void_init(obj_void_t* obj_void) {
 
 bool is_void(const obj_t* obj) {
     return type(obj) == OBJ_TYPE_VOID;
+}
+
+void obj_pointer_init(obj_pointer_t* obj_pointer, void* pointer) {
+    obj_init(&obj_pointer->base, OBJ_TYPE_POINTER);
+    obj_pointer->pointer = pointer;
+}
+
+bool is_pointer(const obj_t* obj) {
+    return type(obj) == OBJ_TYPE_POINTER;
+}
+
+void* get_pointer(const obj_t* obj) {
+    assert(is_pointer(obj));
+    return ((obj_pointer_t*)obj)->pointer;
 }
 
 void obj_bool_init(obj_bool_t* obj_bool, bool value) {
@@ -169,6 +220,82 @@ void set_env_parent(obj_t* obj, obj_t* parent) {
 hasher_t* get_env_bindings(const obj_t* obj) {
     assert(is_env(obj));
     return &((obj_env_t*)obj)->bindings;
+}
+
+void obj_ffi_create(obj_ffi_t* obj_ffi) {
+    obj_init(&obj_ffi->base, OBJ_TYPE_FFI);
+    obj_ffi->arg_types_top = 0;
+    obj_ffi->arg_types_size = 0;
+    obj_ffi->arg_types = NULL;
+    obj_ffi->ret_type = &ffi_type_void;
+}
+
+void obj_ffi_destroy(obj_ffi_t* obj_ffi) {
+    if (obj_ffi->arg_types) {
+        free(obj_ffi->arg_types);
+        obj_ffi->arg_types = NULL;
+    }
+    obj_ffi->arg_types_top = 0;
+    obj_ffi->arg_types_size = 0;
+    obj_ffi->ret_type = &ffi_type_void;
+}
+
+bool is_ffi(const obj_t* obj) {
+    return type(obj) == OBJ_TYPE_FFI;
+}
+
+void set_ffi_ret_type(obj_t* obj, obj_type_t type) {
+    assert(is_ffi(obj));
+    obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
+    obj_ffi->ret_type = obj_type_to_ffi_type(type);
+}
+
+void add_ffi_arg_type(obj_t* obj, obj_type_t type) {
+    assert(is_ffi(obj));
+    obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
+    if (obj_ffi->arg_types_size <= obj_ffi->arg_types_top) {
+        if (obj_ffi->arg_types_size == 0) {
+            obj_ffi->arg_types_size = 4;
+            obj_ffi->arg_types = malloc(sizeof(*obj_ffi->arg_types) * obj_ffi->arg_types_size);
+        } else {
+            obj_ffi->arg_types_size *= 2;
+            obj_ffi->arg_types = realloc(obj_ffi->arg_types, sizeof(*obj_ffi->arg_types) * obj_ffi->arg_types_size);
+        }
+    }
+    assert(obj_ffi->arg_types_top < obj_ffi->arg_types_size);
+    obj_ffi->arg_types[obj_ffi->arg_types_top++] = obj_type_to_ffi_type(type);
+}
+
+int get_ffi_nargs(const obj_t* obj) {
+    assert(is_ffi(obj));
+    obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
+    return obj_ffi->arg_types_top;
+}
+
+bool obj_ffi_finalize(obj_t* obj) {
+    assert(is_ffi(obj));
+    obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
+    ffi_status status = ffi_prep_cif(&obj_ffi->cif, FFI_DEFAULT_ABI, obj_ffi->arg_types_top, obj_ffi->ret_type, obj_ffi->arg_types);
+    return status == FFI_OK;
+}
+
+obj_type_t ffi_type_to_obj_type(ffi_type* type) {
+    switch (type->type) {
+    case FFI_TYPE_VOID: return OBJ_TYPE_VOID;
+    case FFI_TYPE_SINT32: return OBJ_TYPE_BOOL;
+    case FFI_TYPE_DOUBLE: return OBJ_TYPE_REAL;
+    case FFI_TYPE_POINTER: return OBJ_TYPE_POINTER;
+    default: assert(0 && "Unsupported FFI type");    
+    }
+}
+
+ffi_type* obj_type_to_ffi_type(obj_type_t type) {
+    switch (type) {
+    case OBJ_TYPE_VOID: return &ffi_type_void;
+    case OBJ_TYPE_BOOL: return &ffi_type_sint32;
+    case OBJ_TYPE_REAL: return &ffi_type_double;
+    case OBJ_TYPE_POINTER: return &ffi_type_pointer;
+    }
 }
 
 void obj_macro_init(obj_macro_t* obj_macro, obj_t* params, obj_t* body) {

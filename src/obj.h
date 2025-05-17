@@ -4,13 +4,15 @@
 # include "str.h"
 # include "hasher.h"
 
-typedef struct memory_t memory_t;
+# include <ffi.h>
 
 typedef enum obj_type_t {
+    OBJ_TYPE_LISP_TYPE,
     OBJ_TYPE_ERROR,
     OBJ_TYPE_EOF,
     OBJ_TYPE_NIL,
     OBJ_TYPE_VOID,
+    OBJ_TYPE_POINTER,
     OBJ_TYPE_BOOL,
     OBJ_TYPE_CONS,
     OBJ_TYPE_REAL,
@@ -18,20 +20,28 @@ typedef enum obj_type_t {
     OBJ_TYPE_STRING,
     OBJ_TYPE_FILE,
     OBJ_TYPE_ENV,
+    OBJ_TYPE_FFI,
 
     OBJ_TYPE_MACRO,
 
     OBJ_TYPE_FUNCTION_PRIMITIVE,
-    OBJ_TYPE_FUNCTION_COMPOUND,
-
-    __OBJ_TYPE_SIZE
+    OBJ_TYPE_FUNCTION_COMPOUND
 } obj_type_t;
+const char* obj_type_to_string(obj_type_t type);
 
 typedef struct obj_t {
     obj_type_t type;
 } obj_t;
 void obj_init(obj_t* obj, obj_type_t obj_type);
 obj_type_t type(const obj_t* obj);
+
+typedef struct obj_lisp_type_t {
+    obj_t base;
+    obj_type_t type;
+} obj_lisp_type_t;
+void obj_lisp_type_init(obj_lisp_type_t* obj_lisp_type, obj_type_t type);
+bool is_lisp_type(const obj_t* obj);
+obj_type_t get_lisp_type(const obj_t* obj);
 
 typedef struct obj_error_t {
     obj_t base;
@@ -58,6 +68,14 @@ typedef struct obj_void_t {
 } obj_void_t;
 void obj_void_init(obj_void_t* obj_void);
 bool is_void(const obj_t* obj);
+
+typedef struct obj_pointer_t {
+    obj_t base;
+    void* pointer;
+} obj_pointer_t;
+void obj_pointer_init(obj_pointer_t* obj_pointer, void* pointer);
+bool is_pointer(const obj_t* obj);
+void* get_pointer(const obj_t* obj);
 
 typedef struct obj_bool_t {
     obj_t base;
@@ -123,6 +141,24 @@ obj_t* get_env_parent(const obj_t* obj);
 void set_env_parent(obj_t* obj, obj_t* parent);
 hasher_t* get_env_bindings(const obj_t* obj);
 
+typedef struct obj_ffi_t {
+    obj_t base;
+    ffi_cif cif;
+    int arg_types_top;
+    int arg_types_size;
+    ffi_type** arg_types;
+    ffi_type* ret_type;
+} obj_ffi_t;
+void obj_ffi_create(obj_ffi_t* obj_ffi);
+void obj_ffi_destroy(obj_ffi_t* obj_ffi);
+bool is_ffi(const obj_t* obj);
+void set_ffi_ret_type(obj_t* obj, obj_type_t type);
+void add_ffi_arg_type(obj_t* obj, obj_type_t type);
+int get_ffi_nargs(const obj_t* obj);
+bool obj_ffi_finalize(obj_t* obj_ffi);
+obj_type_t ffi_type_to_obj_type(ffi_type* type);
+ffi_type* obj_type_to_ffi_type(obj_type_t type);
+
 typedef struct obj_macro_t {
     obj_t base;
     obj_t* params;
@@ -133,7 +169,7 @@ bool is_macro(const obj_t* obj);
 obj_t* get_macro_params(const obj_t* obj);
 obj_t* get_macro_body(const obj_t* obj);
 
-typedef obj_t* (*primitive_t)(memory_t* memory, obj_t* op, obj_t* args, obj_t* env);
+typedef obj_t* (*primitive_t)(obj_t* op, obj_t* args, obj_t* env);
 typedef struct obj_primitive_t {
     obj_t base;
     primitive_t primitive;
