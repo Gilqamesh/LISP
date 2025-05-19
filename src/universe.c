@@ -3,7 +3,10 @@
 #include <dlfcn.h>
 
 universe_t UNIVERSE;
-
+static obj_t* primitive_typeof(obj_t* op, obj_t* args, obj_t* env);
+static obj_t* primitive_error(obj_t* op, obj_t* args, obj_t* env);
+static obj_t* primitive_display(obj_t* op, obj_t* args, obj_t* env);
+static obj_t* primitive_begin(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_define(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_set(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_quote(obj_t* op, obj_t* args, obj_t* env);
@@ -12,6 +15,7 @@ static obj_t* primitive_macroexpand_1(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_macro(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_lambda(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_if(obj_t* op, obj_t* args, obj_t* env);
+static obj_t* primitive_cons(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_car(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_cdr(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_set_car(obj_t* op, obj_t* args, obj_t* env);
@@ -22,6 +26,7 @@ static obj_t* primitive_write(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_eval(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_apply(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_fopen(obj_t* op, obj_t* args, obj_t* env);
+static obj_t* primitive_source(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_ffi(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_dlsym(obj_t* op, obj_t* args, obj_t* env);
 static obj_t* primitive_ffi_call(obj_t* op, obj_t* args, obj_t* env);
@@ -37,6 +42,8 @@ static void obj_nil_to_string(const obj_t* obj, str_t* str);
 static void obj_void_to_string(const obj_t* obj, str_t* str);
 static void obj_pointer_to_string(const obj_t* obj, str_t* str);
 static void obj_bool_to_string(const obj_t* obj, str_t* str);
+static void obj_int32_to_string(const obj_t* obj, str_t* str);
+static void obj_int64_to_string(const obj_t* obj, str_t* str);
 static void obj_cons_to_string(const obj_t* obj, str_t* str);
 static void obj_real_to_string(const obj_t* obj, str_t* str);
 static void obj_symbol_to_string(const obj_t* obj, str_t* str);
@@ -49,7 +56,7 @@ static void obj_primitive_to_string(const obj_t* obj, str_t* str);
 static void obj_compound_to_string(const obj_t* obj, str_t* str);
 static void obj_to_string(const obj_t* obj, str_t* str);
 
-static void* ffi_get_internal_data_from_type(ffi_type* type, obj_t* obj);
+static void* ffi_get_internal_data_from_type(obj_t* obj);
 
 static obj_t* eval(obj_t* obj, obj_t* env);
 static obj_t* apply(obj_t* op, obj_t* args, obj_t* env);
@@ -98,6 +105,8 @@ static obj_t* memory_nil();
 static obj_t* memory_void();
 static obj_t* memory_pointer(void* pointer);
 static obj_t* memory_bool(bool boolean);
+static obj_t* memory_int32(int32_t integer);
+static obj_t* memory_int64(int64_t integer);
 static obj_t* memory_cons(obj_t* car, obj_t* cdr);
 static obj_t* memory_real(double real);
 static obj_t* memory_symbol(str_t symbol);
@@ -109,7 +118,7 @@ static obj_t* memory_macro(obj_t* params, obj_t* body);
 static obj_t* memory_primitive(str_t name, primitive_t primitive);
 static obj_t* memory_compound(obj_t* params, obj_t* body, obj_t* env);
 
-static obj_t* memory_from_data(void* data, obj_type_t type);
+static obj_t* obj_init_from_data(void* data, obj_t* obj);
 
 typedef obj_t* (*reader_function_t)(FILE* file);
 
@@ -137,6 +146,42 @@ static obj_t* reader_left_parent(FILE* file);
 static obj_t* reader_true(FILE* file);
 static obj_t* reader_false(FILE* file);
 static obj_t* reader_multiline_comment(FILE* file);
+
+static obj_t* primitive_typeof(obj_t* op, obj_t* args, obj_t* env) {
+    obj_t* arg = list_ref(args, 0);
+    obj_t* evaled_arg = eval(arg, env);
+    if (is_error(evaled_arg)) {
+        return evaled_arg;
+    }
+    return memory_type(type(evaled_arg));
+}
+
+static obj_t* primitive_error(obj_t* op, obj_t* args, obj_t* env) {
+    obj_t* values = list_of_values(args, env);
+    str_t message = str();
+    obj_to_string(values, &message);
+    return memory_error(message);
+}
+
+static obj_t* primitive_display(obj_t* op, obj_t* args, obj_t* env) {
+    while (!is_nil(args)) {
+        obj_t* arg = get_car(args);
+        obj_t* evaled_arg = eval(arg, env);
+        if (is_error(evaled_arg)) {
+            return evaled_arg;
+        }
+        str_t s = str();
+        obj_to_string(evaled_arg, &s);
+        fprintf(stdout, "%s", str_data(&s));
+        str_destroy(&s);
+        args = get_cdr(args);
+    }
+    return memory_void();
+}
+
+static obj_t* primitive_begin(obj_t* op, obj_t* args, obj_t* env) {
+    return begin(args, env);
+}
 
 static obj_t* primitive_define(obj_t* op, obj_t* args, obj_t* env) {
     obj_t* name = list_ref(args, 0);
@@ -215,12 +260,36 @@ static obj_t* primitive_if(obj_t* op, obj_t* args, obj_t* env) {
     return memory_void();
 }
 
+static obj_t* primitive_cons(obj_t* op, obj_t* args, obj_t* env) {
+    obj_t* arg1 = list_ref(args, 0);
+    obj_t* arg2 = list_ref(args, 1);
+    obj_t* evaled_arg1 = eval(arg1, env);
+    obj_t* evaled_arg2 = eval(arg2, env);
+    if (is_error(evaled_arg1)) {
+        return evaled_arg1;
+    }
+    if (is_error(evaled_arg2)) {
+        return evaled_arg2;
+    }
+    return memory_cons(evaled_arg1, evaled_arg2);
+}
+
 static obj_t* primitive_car(obj_t* op, obj_t* args, obj_t* env) {
-    return get_car(list_ref(args, 0));
+    obj_t* arg = list_ref(args, 0);
+    obj_t* evaled_arg = eval(arg, env);
+    if (!is_cons(evaled_arg)) {
+        return err(str_create("car: first argument must be a cons cell"), evaled_arg);
+    }
+    return get_car(evaled_arg);
 }
 
 static obj_t* primitive_cdr(obj_t* op, obj_t* args, obj_t* env) {
-    return get_cdr(list_ref(args, 0));
+    obj_t* arg = list_ref(args, 0);
+    obj_t* evaled_arg = eval(arg, env);
+    if (!is_cons(evaled_arg)) {
+        return err(str_create("cdr: first argument must be a cons cell"), evaled_arg);
+    }
+    return get_cdr(evaled_arg);
 }
 
 static obj_t* primitive_set_car(obj_t* op, obj_t* args, obj_t* env) {
@@ -270,10 +339,7 @@ static obj_t* primitive_eq(obj_t* op, obj_t* args, obj_t* env) {
     if (is_error(evaled_arg2)) {
         return evaled_arg2;
     }
-    if (is_eq(evaled_arg1, evaled_arg2)) {
-        return memory_bool(true);
-    }
-    return memory_bool(false);
+    return memory_bool(is_eq(evaled_arg1, evaled_arg2));
 }
 
 static obj_t* primitive_read(obj_t* op, obj_t* args, obj_t* env) {
@@ -326,15 +392,16 @@ static obj_t* primitive_eval(obj_t* op, obj_t* args, obj_t* env) {
 static obj_t* primitive_apply(obj_t* op, obj_t* args, obj_t* env) {
     obj_t* arg1 = list_ref(args, 0);
     obj_t* arg2 = list_ref(args, 1);
-    obj_t* evaled_arg1 = eval(arg1, env);
-    obj_t* evaled_arg2 = eval(arg2, env);
-    if (is_error(evaled_arg1)) {
-        return evaled_arg1;
+    obj_t* operator = eval(arg1, env);
+    obj_t* argument_list = eval(arg2, env);
+    print(argument_list, stdout);
+    if (is_error(operator)) {
+        return operator;
     }
-    if (is_error(evaled_arg2)) {
-        return evaled_arg2;
+    if (is_error(argument_list)) {
+        return argument_list;
     }
-    return apply(evaled_arg1, evaled_arg2, env);
+    return apply(operator, argument_list, env);
 }
 
 static obj_t* primitive_fopen(obj_t* op, obj_t* args, obj_t* env) {
@@ -366,6 +433,32 @@ static obj_t* primitive_fopen(obj_t* op, obj_t* args, obj_t* env) {
     return memory_file(file);
 }
 
+static obj_t* primitive_source(obj_t* op, obj_t* args, obj_t* env) {
+    obj_t* arg = get_car(args);
+    obj_t* path = eval(arg, env);
+    if (is_error(path)) {
+        return path;
+    }
+    if (!is_file(path)) {
+        return err(str_create("source: first argument must be a file"), path);
+    }
+    FILE* file = get_file(path);
+    while (!reader_is_at_end(file)) {
+        obj_t* result = reader_read(file);
+        if (is_eof(result)) {
+            break;
+        }
+        if (is_error(result)) {
+            return result;
+        }
+        obj_t* evaled_result = eval(result, env);
+        if (is_error(evaled_result)) {
+            return evaled_result;
+        }
+    }
+    return memory_void();
+}
+
 static obj_t* primitive_ffi(obj_t* op, obj_t* args, obj_t* env) {
     // (ffi return-type ... arg-types)
     // alternatively this could be a wrapper for the call where the user could install pre/postamble code
@@ -381,12 +474,8 @@ static obj_t* primitive_ffi(obj_t* op, obj_t* args, obj_t* env) {
         return err(str_create("ffi: first argument must be a lisp type"), return_type);
     }
     args = get_cdr(args);
-    if (is_nil(args)) {
-        return err(str_create("ffi: missing arguments"), return_type);
-    }
-
     obj_t* ffi = memory_ffi();
-    set_ffi_ret_type(ffi, get_lisp_type(return_type));
+    set_ffi_ret_type(ffi, return_type);
     while (!is_nil(args)) {
         obj_t* arg = get_car(args);
         obj_t* evaled_arg = eval(arg, env);
@@ -396,7 +485,7 @@ static obj_t* primitive_ffi(obj_t* op, obj_t* args, obj_t* env) {
         if (!is_lisp_type(evaled_arg)) {
             return err(str_create("ffi: argument must be a lisp type"), evaled_arg);
         }
-        add_ffi_arg_type(ffi, get_lisp_type(evaled_arg));
+        add_ffi_arg_type(ffi, evaled_arg);
         args = get_cdr(args);
     }
     obj_ffi_finalize(ffi);
@@ -446,25 +535,28 @@ static obj_t* primitive_ffi_call(obj_t* op, obj_t* args, obj_t* env) {
         return err(str_create("ffi-call: second argument must be a pointer"), pointer);
     }
     args = get_cdr(args);
-    if (is_nil(args)) {
-        return err(str_create("ffi-call: missing arguments"), pointer);
-    }
-
-    obj_ffi_t* obj_ffi = (obj_ffi_t*)ffi;
+    const size_t nargs = get_ffi_nargs(ffi);
     void* converted_args[16];
-    for (int i = 0; i < obj_ffi->arg_types_top; ++i) {
+    for (size_t i = 0; i < nargs; ++i) {
         if (is_nil(args)) {
             return err(str_create("ffi-call: missing arguments"), pointer);
         }
-        converted_args[i] = ffi_get_internal_data_from_type(obj_ffi->arg_types[i], get_car(args));
+        obj_t* expected_arg = get_ffi_arg_type(ffi, i);
+        obj_t* arg = get_car(args);
+        obj_type_t expected_arg_type = get_lisp_type(expected_arg);
+        obj_type_t arg_type = type(arg);
+        if (expected_arg_type != arg_type) {
+            return err(str_create("ffi-call: argument type mismatch"), expected_arg, arg);
+        }
+        converted_args[i] = ffi_get_internal_data_from_type(arg);
         args = get_cdr(args);
     }
-    void* m = alloca(obj_ffi->ret_type->size);
+    void* m = alloca(get_ffi_type_size(get_ffi_ret_type(ffi)));
     if (!m) {
         return err(str_create("ffi-call: alloca failed"), ffi);
     }
-    ffi_call(&obj_ffi->cif, get_pointer(pointer), m, converted_args);
-    obj_t* res = memory_from_data(m, ffi_type_to_obj_type(obj_ffi->ret_type));
+    ffi_call(&((obj_ffi_t*)ffi)->cif, get_pointer(pointer), m, converted_args);
+    obj_t* res = obj_init_from_data(m, get_ffi_ret_type(ffi));
     return res;
 
 }
@@ -505,21 +597,17 @@ static obj_t* apply_macro(obj_t* op, obj_t* args, obj_t* env) {
     return begin(body, new_env);
 }
 
-static void* ffi_get_internal_data_from_type(ffi_type* type, obj_t* obj) {
-    switch (type->type) {
-    case FFI_TYPE_VOID: return NULL;
-    case FFI_TYPE_SINT32: {
-        assert(is_bool(obj));
-        return &((obj_bool_t*)obj)->value;
-    }
-    case FFI_TYPE_POINTER: {
-        assert(is_pointer(obj));
-        return &((obj_pointer_t*)obj)->pointer;
-    }
-    case FFI_TYPE_DOUBLE: {
-        assert(is_real(obj));
-        return &((obj_real_t*)obj)->real;
-    }
+static void* ffi_get_internal_data_from_type(obj_t* obj) {
+    switch (type(obj)) {
+    case OBJ_TYPE_VOID: return 0;
+    case OBJ_TYPE_BOOL: return (void*) &((obj_bool_t*)obj)->value;
+    case OBJ_TYPE_INT32: return (void*) &((obj_int32_t*)obj)->value;
+    case OBJ_TYPE_INT64: return (void*) &((obj_int64_t*)obj)->value;
+    case OBJ_TYPE_REAL: return (void*) &((obj_real_t*)obj)->real;
+    case OBJ_TYPE_POINTER: return get_pointer(obj);
+    case OBJ_TYPE_STRING: return (void*) &get_string(obj)->data;
+    case OBJ_TYPE_SYMBOL: return (void*) &get_symbol(obj)->data;
+    case OBJ_TYPE_FILE: return (void*) get_file(obj);
     default: assert(0 && "Unsupported FFI type");
     }
 }
@@ -556,6 +644,14 @@ static void obj_pointer_to_string(const obj_t* obj, str_t* str) {
 
 static void obj_bool_to_string(const obj_t* obj, str_t* str) {
     str_push(str, get_bool(obj) ? "#t" : "#f");
+}
+
+static void obj_int32_to_string(const obj_t* obj, str_t* str) {
+    str_push(str, "%d", get_int32(obj));
+}
+
+static void obj_int64_to_string(const obj_t* obj, str_t* str) {
+    str_push(str, "%d", get_int64(obj));
 }
 
 static void obj_cons_to_string(const obj_t* obj, str_t* str) {
@@ -611,18 +707,18 @@ static void obj_env_to_string(const obj_t* obj, str_t* str) {
 }
 
 static void obj_ffi_to_string(const obj_t* obj, str_t* str) {
-    str_push(str, "#<ffi>");
-    // str_push_str(str, get_ffi_ret_type(obj));
-    // str_push(str, " ");
-    // obj_t* arg_types = get_ffi_arg_types(obj);
-    // while (is_cons(arg_types)) {
-    //     obj_to_string(get_car(arg_types), str);
-    //     arg_types = get_cdr(arg_types);
-    //     if (is_cons(arg_types)) {
-    //         str_push(str, " ");
-    //     }
-    // }
-    // str_push(str, ">");
+    str_push(str, "#<ffi ");
+    obj_to_string(get_ffi_ret_type(obj), str);
+    str_push(str, " ");
+    str_push(str, "(");
+    const size_t nargs = get_ffi_nargs(obj);
+    for (size_t i = 0; i < nargs; ++i) {
+        obj_to_string(get_ffi_arg_type(obj, i), str);
+        if (i + 1 < nargs) {
+            str_push(str, " ");
+        }
+    }
+    str_push(str, ")>");
 }
 
 static void obj_macro_to_string(const obj_t* obj, str_t* str) {
@@ -827,6 +923,9 @@ static obj_t* begin(obj_t* obj, obj_t* env) {
     obj_t* result = memory_void();
     while (is_cons(obj)) {
         result = eval(get_car(obj), env);
+        if (is_error(result)) {
+            break ;
+        }
         obj = get_cdr(obj);
     }
     return result;
@@ -901,6 +1000,12 @@ static void obj_to_string(const obj_t* obj, str_t* str) {
     } break ;
     case OBJ_TYPE_BOOL: {
         obj_bool_to_string(obj, str);
+    } break ;
+    case OBJ_TYPE_INT32: {
+        obj_int32_to_string(obj, str);
+    } break ;
+    case OBJ_TYPE_INT64: {
+        obj_int64_to_string(obj, str);
     } break ;
     case OBJ_TYPE_CONS: {
         obj_cons_to_string(obj, str);
@@ -1075,26 +1180,8 @@ static void interned_entries_remove(size_t index) {
 }
 
 static obj_t* memory_type(obj_type_t type) {
-    switch (type) {
-    case OBJ_TYPE_LISP_TYPE: return UNIVERSE.obj_lisp_type_type;
-    case OBJ_TYPE_ERROR: return UNIVERSE.obj_error_type;
-    case OBJ_TYPE_EOF: return UNIVERSE.obj_eof_type;
-    case OBJ_TYPE_NIL: return UNIVERSE.obj_nil_type;
-    case OBJ_TYPE_VOID: return UNIVERSE.obj_void_type;
-    case OBJ_TYPE_POINTER: return UNIVERSE.obj_pointer_type;
-    case OBJ_TYPE_BOOL: return UNIVERSE.obj_bool_type;
-    case OBJ_TYPE_CONS: return UNIVERSE.obj_cons_type;
-    case OBJ_TYPE_REAL: return UNIVERSE.obj_real_type;
-    case OBJ_TYPE_SYMBOL: return UNIVERSE.obj_symbol_type;
-    case OBJ_TYPE_STRING: return UNIVERSE.obj_string_type;
-    case OBJ_TYPE_FILE: return UNIVERSE.obj_file_type;
-    case OBJ_TYPE_ENV: return UNIVERSE.obj_env_type;
-    case OBJ_TYPE_FFI: return UNIVERSE.obj_ffi_type;
-    case OBJ_TYPE_MACRO: return UNIVERSE.obj_macro_type;
-    case OBJ_TYPE_FUNCTION_PRIMITIVE: return UNIVERSE.obj_function_primitive_type;
-    case OBJ_TYPE_FUNCTION_COMPOUND: return UNIVERSE.obj_function_compound_type;
-    default: assert(0);
-    }
+    assert(0 <= type && type < _OBJ_TYPE_SIZE);
+    return UNIVERSE.obj_types[type];
 }
 
 static obj_t* memory_error(str_t message) {
@@ -1125,6 +1212,20 @@ static obj_t* memory_pointer(void* pointer) {
 
 static obj_t* memory_bool(bool boolean) {
     return boolean ? UNIVERSE.obj_true : UNIVERSE.obj_false;
+}
+
+static obj_t* memory_int32(int32_t integer) {
+    obj_int32_t* obj_int32 = (obj_int32_t*)malloc(sizeof(obj_int32_t));
+    UNIVERSE.total_allocated += sizeof(obj_int32_t);
+    obj_int32_init(obj_int32, integer);
+    return (obj_t*) obj_int32;
+}
+
+static obj_t* memory_int64(int64_t integer) {
+    obj_int64_t* obj_int64 = (obj_int64_t*)malloc(sizeof(obj_int64_t));
+    UNIVERSE.total_allocated += sizeof(obj_int64_t);
+    obj_int64_init(obj_int64, integer);
+    return (obj_t*) obj_int64;
 }
 
 static obj_t* memory_cons(obj_t* car, obj_t* cdr) {
@@ -1208,13 +1309,15 @@ static obj_t* memory_compound(obj_t* params, obj_t* body, obj_t* env) {
     return (obj_t*) obj_compound;
 }
 
-static obj_t* memory_from_data(void* data, obj_type_t type) {
-    switch (type) {
+static obj_t* obj_init_from_data(void* data, obj_t* type) {
+    switch (get_lisp_type(type)) {
     case OBJ_TYPE_VOID: return memory_void();
     case OBJ_TYPE_EOF: return memory_eof();
     case OBJ_TYPE_NIL: return memory_nil();
     case OBJ_TYPE_POINTER: return memory_pointer(*(void**)data);
     case OBJ_TYPE_BOOL: return memory_bool(*(bool*)data);
+    case OBJ_TYPE_INT32: return memory_int32(*(int32_t*)data);
+    case OBJ_TYPE_INT64: return memory_int64(*(int64_t*)data);
     case OBJ_TYPE_REAL: return memory_real(*(double*)data);
     default: assert(0);
     }
@@ -1395,7 +1498,18 @@ static obj_t* reader_default_function(FILE* file, str_t lexeme) {
                 return memory_symbol(lexeme);
             }
         }
-        obj_t* result = memory_real(atof(str_data(&lexeme)));
+        obj_t* result = 0;
+        double real = atof(str_data(&lexeme));
+        // float fl = (float)real;
+        int64_t int64 = (int64_t)real;
+        int32_t int32 = (int32_t)real;
+        if (real == int32) {
+            result = memory_int32((int32_t)real);
+        } else if (real == int64) {
+            result = memory_int64((int64_t)real);
+        } else {
+            result = memory_real(real);
+        }
         str_destroy(&lexeme);
         return result;
     } else {
@@ -1446,75 +1560,35 @@ static obj_t* reader_read(FILE* file) {
 bool universe_init() {
     memset(&UNIVERSE, 0, sizeof(universe_t));
 
-    UNIVERSE.total_allocated = 0;
+    UNIVERSE.dlhandle = dlopen(0, RTLD_LAZY);
+    // UNIVERSE.dlhandle = dlopen(0, RTLD_GLOBAL | RTLD_NOW);
+    if (!UNIVERSE.dlhandle) {
+        fprintf(stderr, "dlopen failed: %s\n", dlerror());
+        return false;
+    }
 
-    UNIVERSE.obj_lisp_type_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_lisp_type_type, OBJ_TYPE_LISP_TYPE);
+    UNIVERSE.env = memory_env();
+    UNIVERSE.interned_entries_size = 16;
+    UNIVERSE.interned_entries_top = 0;
+    UNIVERSE.interned_entries = malloc(sizeof(*UNIVERSE.interned_entries) * UNIVERSE.interned_entries_size);
+    for (size_t i = 0; i < UNIVERSE.interned_entries_size; ++i) {
+        UNIVERSE.interned_entries[i] = malloc(sizeof(interned_entry_t));
+        UNIVERSE.interned_entries[i]->index = i;
+    }
+    UNIVERSE.interned_symbols = hasher(
+        interned_entries_key_hash,
+        interned_entries_key_compare,
+        interned_entries_entry_key
+    );
 
-    UNIVERSE.obj_error_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_error_type, OBJ_TYPE_ERROR);
-
-    UNIVERSE.obj_eof_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_eof_type, OBJ_TYPE_EOF);
-
-    UNIVERSE.obj_nil_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_nil_type, OBJ_TYPE_NIL);
-
-    UNIVERSE.obj_void_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_void_type, OBJ_TYPE_VOID);
-
-    UNIVERSE.obj_pointer_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_pointer_type, OBJ_TYPE_POINTER);
-
-    UNIVERSE.obj_bool_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_bool_type, OBJ_TYPE_BOOL);
-
-    UNIVERSE.obj_cons_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_cons_type, OBJ_TYPE_CONS);
-
-    UNIVERSE.obj_real_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_real_type, OBJ_TYPE_REAL);
-
-    UNIVERSE.obj_symbol_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_symbol_type, OBJ_TYPE_SYMBOL);
-
-    UNIVERSE.obj_string_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_string_type, OBJ_TYPE_STRING);
-
-    UNIVERSE.obj_file_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_file_type, OBJ_TYPE_FILE);
-
-    UNIVERSE.obj_env_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_env_type, OBJ_TYPE_ENV);
-
-    UNIVERSE.obj_ffi_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_ffi_type, OBJ_TYPE_FFI);
-
-    UNIVERSE.obj_macro_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_macro_type, OBJ_TYPE_MACRO);
-
-    UNIVERSE.obj_function_primitive_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_function_primitive_type, OBJ_TYPE_FUNCTION_PRIMITIVE);
-
-    UNIVERSE.obj_function_compound_type = malloc(sizeof(obj_lisp_type_t));
-    UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
-    obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_function_compound_type, OBJ_TYPE_FUNCTION_COMPOUND);
+    for (int i = 0; i < sizeof(UNIVERSE.obj_types) / sizeof(UNIVERSE.obj_types[0]); ++i) {
+        UNIVERSE.obj_types[i] = malloc(sizeof(obj_lisp_type_t));
+        UNIVERSE.total_allocated += sizeof(obj_lisp_type_t);
+        obj_lisp_type_init((obj_lisp_type_t*)UNIVERSE.obj_types[i], i);
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "type-%s", obj_type_to_string(i));
+        define_env_binding(UNIVERSE.env, memory_symbol(str_create("%s", buffer)), UNIVERSE.obj_types[i]);
+    }
 
     UNIVERSE.obj_eof = malloc(sizeof(obj_eof_t));
     UNIVERSE.total_allocated += sizeof(obj_eof_t);
@@ -1551,40 +1625,11 @@ bool universe_init() {
     reader_register_reader_macro_str("#t", &reader_true);
     reader_register_reader_macro_str("#f", &reader_false);
 
-    UNIVERSE.env = memory_env();
-
-    UNIVERSE.interned_entries_size = 16;
-    UNIVERSE.interned_entries_top = 0;
-    UNIVERSE.interned_entries = malloc(sizeof(*UNIVERSE.interned_entries) * UNIVERSE.interned_entries_size);
-    for (size_t i = 0; i < UNIVERSE.interned_entries_size; ++i) {
-        UNIVERSE.interned_entries[i] = malloc(sizeof(interned_entry_t));
-        UNIVERSE.interned_entries[i]->index = i;
-    }
-    UNIVERSE.interned_symbols = hasher(
-        interned_entries_key_hash,
-        interned_entries_key_compare,
-        interned_entries_entry_key
-    );
-
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-lisp-type")), UNIVERSE.obj_lisp_type_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-error")), UNIVERSE.obj_error_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-eof")), UNIVERSE.obj_eof_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-nil")), UNIVERSE.obj_nil_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-void")), UNIVERSE.obj_void_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-pointer")), UNIVERSE.obj_pointer_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-bool")), UNIVERSE.obj_bool_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-cons")), UNIVERSE.obj_cons_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-real")), UNIVERSE.obj_real_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-symbol")), UNIVERSE.obj_symbol_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-string")), UNIVERSE.obj_string_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-file")), UNIVERSE.obj_file_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-env")), UNIVERSE.obj_env_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-ffi")), UNIVERSE.obj_ffi_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-macro")), UNIVERSE.obj_macro_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-function-primitive")), UNIVERSE.obj_function_primitive_type);
-    define_env_binding(UNIVERSE.env, memory_symbol(str_create("type-function-compound")), UNIVERSE.obj_function_compound_type);
-
 #define _REGISTER_PRIMITIVE(name, fn) define_env_binding(UNIVERSE.env, memory_symbol(str_create(name)), memory_primitive(str_create(name), fn))
+    _REGISTER_PRIMITIVE("typeof", &primitive_typeof);
+    _REGISTER_PRIMITIVE("error", &primitive_error);
+    _REGISTER_PRIMITIVE("display", &primitive_display);
+    _REGISTER_PRIMITIVE("begin", &primitive_begin);
     _REGISTER_PRIMITIVE("define", &primitive_define);
     _REGISTER_PRIMITIVE("set!", &primitive_set);
     _REGISTER_PRIMITIVE("quote", &primitive_quote);
@@ -1593,26 +1638,23 @@ bool universe_init() {
     _REGISTER_PRIMITIVE("macro", &primitive_macro);
     _REGISTER_PRIMITIVE("lambda", &primitive_lambda);
     _REGISTER_PRIMITIVE("if", &primitive_if);
+    _REGISTER_PRIMITIVE("cons", &primitive_cons);
     _REGISTER_PRIMITIVE("car", &primitive_car);
     _REGISTER_PRIMITIVE("cdr", &primitive_cdr);
+    _REGISTER_PRIMITIVE("set-car!", &primitive_set_car);
+    _REGISTER_PRIMITIVE("set-cdr!", &primitive_set_cdr);
     _REGISTER_PRIMITIVE("eq?", &primitive_eq);
     _REGISTER_PRIMITIVE("read", &primitive_read);
     _REGISTER_PRIMITIVE("write", &primitive_write);
     _REGISTER_PRIMITIVE("eval", &primitive_eval);
     _REGISTER_PRIMITIVE("apply", &primitive_apply);
-    _REGISTER_PRIMITIVE("open", &primitive_fopen);
+    _REGISTER_PRIMITIVE("fopen", &primitive_fopen);
+    _REGISTER_PRIMITIVE("source", &primitive_source);
     _REGISTER_PRIMITIVE("ffi", &primitive_ffi);
     _REGISTER_PRIMITIVE("dlsym", &primitive_dlsym);
     _REGISTER_PRIMITIVE("ffi-call", &primitive_ffi_call);
 
 #undef _REGISTER_PRIMITIVE
-
-    UNIVERSE.dlhandle = dlopen(0, RTLD_LAZY);
-    // UNIVERSE.dlhandle = dlopen(0, RTLD_GLOBAL | RTLD_NOW);
-    if (!UNIVERSE.dlhandle) {
-        fprintf(stderr, "dlopen failed: %s\n", dlerror());
-        return false;
-    }
 
     return true;
 }

@@ -24,23 +24,7 @@ typedef struct universe_t {
 
     size_t total_allocated;
 
-    obj_t* obj_lisp_type_type;
-    obj_t* obj_error_type;
-    obj_t* obj_eof_type;
-    obj_t* obj_nil_type;
-    obj_t* obj_void_type;
-    obj_t* obj_pointer_type;
-    obj_t* obj_bool_type;
-    obj_t* obj_cons_type;
-    obj_t* obj_real_type;
-    obj_t* obj_symbol_type;
-    obj_t* obj_string_type;
-    obj_t* obj_file_type;
-    obj_t* obj_env_type;
-    obj_t* obj_ffi_type;
-    obj_t* obj_macro_type;
-    obj_t* obj_function_primitive_type;
-    obj_t* obj_function_compound_type;
+    obj_t* obj_types[_OBJ_TYPE_SIZE];
 
     obj_t* obj_eof;
     obj_t* obj_nil;

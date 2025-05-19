@@ -14,6 +14,8 @@ typedef enum obj_type_t {
     OBJ_TYPE_VOID,
     OBJ_TYPE_POINTER,
     OBJ_TYPE_BOOL,
+    OBJ_TYPE_INT32,
+    OBJ_TYPE_INT64,
     OBJ_TYPE_CONS,
     OBJ_TYPE_REAL,
     OBJ_TYPE_SYMBOL,
@@ -25,7 +27,9 @@ typedef enum obj_type_t {
     OBJ_TYPE_MACRO,
 
     OBJ_TYPE_FUNCTION_PRIMITIVE,
-    OBJ_TYPE_FUNCTION_COMPOUND
+    OBJ_TYPE_FUNCTION_COMPOUND,
+
+    _OBJ_TYPE_SIZE
 } obj_type_t;
 const char* obj_type_to_string(obj_type_t type);
 
@@ -84,6 +88,22 @@ typedef struct obj_bool_t {
 void obj_bool_init(obj_bool_t* obj_bool, bool value);
 bool is_bool(const obj_t* obj);
 bool get_bool(const obj_t* obj);
+
+typedef struct obj_int32_t {
+    obj_t base;
+    int32_t value;
+} obj_int32_t;
+void obj_int32_init(obj_int32_t* obj_int32, int32_t value);
+bool is_int32(const obj_t* obj);
+int32_t get_int32(const obj_t* obj);
+
+typedef struct obj_int64_t {
+    obj_t base;
+    int64_t value;
+} obj_int64_t;
+void obj_int64_init(obj_int64_t* obj_int64, int64_t value);
+bool is_int64(const obj_t* obj);
+int64_t get_int64(const obj_t* obj);
 
 typedef struct obj_cons_t {
     obj_t base;
@@ -144,20 +164,24 @@ hasher_t* get_env_bindings(const obj_t* obj);
 typedef struct obj_ffi_t {
     obj_t base;
     ffi_cif cif;
-    int arg_types_top;
-    int arg_types_size;
-    ffi_type** arg_types;
-    ffi_type* ret_type;
+    size_t arg_types_top;
+    size_t arg_types_size;
+    ffi_type** ffi_arg_types;
+    ffi_type* ret_type_ffi;
+    obj_t** arg_types;
+    obj_t* ret_type;
 } obj_ffi_t;
 void obj_ffi_create(obj_ffi_t* obj_ffi);
 void obj_ffi_destroy(obj_ffi_t* obj_ffi);
 bool is_ffi(const obj_t* obj);
-void set_ffi_ret_type(obj_t* obj, obj_type_t type);
-void add_ffi_arg_type(obj_t* obj, obj_type_t type);
-int get_ffi_nargs(const obj_t* obj);
+void set_ffi_ret_type(obj_t* obj, obj_t* type);
+obj_t* get_ffi_ret_type(const obj_t* obj);
+void add_ffi_arg_type(obj_t* obj, obj_t* type);
+obj_t* get_ffi_arg_type(const obj_t* obj, size_t index);
+size_t get_ffi_nargs(const obj_t* obj);
 bool obj_ffi_finalize(obj_t* obj_ffi);
-obj_type_t ffi_type_to_obj_type(ffi_type* type);
-ffi_type* obj_type_to_ffi_type(obj_type_t type);
+ffi_type* obj_type_to_ffi_type(const obj_t* obj);
+size_t get_ffi_type_size(const obj_t* obj);
 
 typedef struct obj_macro_t {
     obj_t base;
