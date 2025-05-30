@@ -12,5 +12,6 @@
 # include <stdint.h>
 # include <setjmp.h>
 # include <stdalign.h>
+# include <execinfo.h>
 
 # endif // LIBC_H

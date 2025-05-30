@@ -15,6 +15,7 @@
 #include "obj_ushort.h"
 #include "obj_long.h"
 #include "obj_ulong.h"
+#include "obj_size_t.h"
 #include "obj_float.h"
 #include "obj_double.h"
 #include "obj_symbol.h"
@@ -46,6 +47,7 @@ const char* obj_type_to_string(obj_type_t type) {
         case OBJ_TYPE_USHORT: return "ushort";
         case OBJ_TYPE_LONG: return "long";
         case OBJ_TYPE_ULONG: return "ulong";
+        case OBJ_TYPE_SIZE_T: return "size_t";
         case OBJ_TYPE_FLOAT: return "float";
         case OBJ_TYPE_DOUBLE: return "double";
         case OBJ_TYPE_SYMBOL: return "symbol";
@@ -88,6 +90,7 @@ void obj_to_string(const obj_t* self, obj_string_t* other) {
         case OBJ_TYPE_USHORT: obj_ushort_to_string((obj_ushort_t*)self, other); break;
         case OBJ_TYPE_LONG: obj_long_to_string((obj_long_t*)self, other); break;
         case OBJ_TYPE_ULONG: obj_ulong_to_string((obj_ulong_t*)self, other); break;
+        case OBJ_TYPE_SIZE_T: obj_size_t_to_string((obj_size_t_t*)self, other); break;
         case OBJ_TYPE_FLOAT: obj_float_to_string((obj_float_t*)self, other); break;
         case OBJ_TYPE_DOUBLE: obj_double_to_string((obj_double_t*)self, other); break;
         case OBJ_TYPE_SYMBOL: obj_symbol_to_string((obj_symbol_t*)self, other); break;
@@ -122,6 +125,7 @@ obj_ffi_t* obj_to_ffi(const obj_t* self) {
         case OBJ_TYPE_USHORT: return obj_ushort_to_ffi((obj_ushort_t*)self);
         case OBJ_TYPE_LONG: return obj_long_to_ffi((obj_long_t*)self);
         case OBJ_TYPE_ULONG: return obj_ulong_to_ffi((obj_ulong_t*)self);
+        case OBJ_TYPE_SIZE_T: return obj_size_t_to_ffi((obj_size_t_t*)self);
         case OBJ_TYPE_FLOAT: return obj_float_to_ffi((obj_float_t*)self);
         case OBJ_TYPE_DOUBLE: return obj_double_to_ffi((obj_double_t*)self);
         case OBJ_TYPE_SYMBOL: return obj_symbol_to_ffi((obj_symbol_t*)self);
@@ -156,6 +160,7 @@ obj_t* obj_copy(const obj_t* self) {
         case OBJ_TYPE_USHORT: return (obj_t*) obj_ushort_copy((obj_ushort_t*)self);
         case OBJ_TYPE_LONG: return (obj_t*) obj_long_copy((obj_long_t*)self);
         case OBJ_TYPE_ULONG: return (obj_t*) obj_ulong_copy((obj_ulong_t*)self);
+        case OBJ_TYPE_SIZE_T: return (obj_t*) obj_size_t_copy((obj_size_t_t*)self);
         case OBJ_TYPE_FLOAT: return (obj_t*) obj_float_copy((obj_float_t*)self);
         case OBJ_TYPE_DOUBLE: return (obj_t*) obj_double_copy((obj_double_t*)self);
         case OBJ_TYPE_SYMBOL: return (obj_t*) obj_symbol_copy((obj_symbol_t*)self);
@@ -193,6 +198,7 @@ bool obj_equal(const obj_t* self, const obj_t* other) {
         case OBJ_TYPE_USHORT: return obj_ushort_equal((obj_ushort_t*)self, (obj_ushort_t*)other);
         case OBJ_TYPE_LONG: return obj_long_equal((obj_long_t*)self, (obj_long_t*)other);
         case OBJ_TYPE_ULONG: return obj_ulong_equal((obj_ulong_t*)self, (obj_ulong_t*)other);
+        case OBJ_TYPE_SIZE_T: return obj_size_t_equal((obj_size_t_t*)self, (obj_size_t_t*)other);
         case OBJ_TYPE_FLOAT: return obj_float_equal((obj_float_t*)self, (obj_float_t*)other);
         case OBJ_TYPE_DOUBLE: return obj_double_equal((obj_double_t*)self, (obj_double_t*)other);
         case OBJ_TYPE_SYMBOL: return obj_symbol_equal((obj_symbol_t*)self, (obj_symbol_t*)other);
@@ -227,6 +233,7 @@ size_t obj_hash(const obj_t* self) {
         case OBJ_TYPE_USHORT: return obj_ushort_hash((obj_ushort_t*)self);
         case OBJ_TYPE_LONG: return obj_long_hash((obj_long_t*)self);
         case OBJ_TYPE_ULONG: return obj_ulong_hash((obj_ulong_t*)self);
+        case OBJ_TYPE_SIZE_T: return obj_size_t_hash((obj_size_t_t*)self);
         case OBJ_TYPE_FLOAT: return obj_float_hash((obj_float_t*)self);
         case OBJ_TYPE_DOUBLE: return obj_double_hash((obj_double_t*)self);
         case OBJ_TYPE_SYMBOL: return obj_symbol_hash((obj_symbol_t*)self);
@@ -261,6 +268,7 @@ obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env) {
         case OBJ_TYPE_USHORT: return (obj_t*) obj_ushort_eval((obj_ushort_t*)self, env);
         case OBJ_TYPE_LONG: return (obj_t*) obj_long_eval((obj_long_t*)self, env);
         case OBJ_TYPE_ULONG: return (obj_t*) obj_ulong_eval((obj_ulong_t*)self, env);
+        case OBJ_TYPE_SIZE_T: return (obj_t*) obj_size_t_eval((obj_size_t_t*)self, env);
         case OBJ_TYPE_FLOAT: return (obj_t*) obj_float_eval((obj_float_t*)self, env);
         case OBJ_TYPE_DOUBLE: return (obj_t*) obj_double_eval((obj_double_t*)self, env);
         case OBJ_TYPE_SYMBOL: return (obj_t*) obj_symbol_eval((obj_symbol_t*)self, env);
@@ -295,6 +303,7 @@ obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_hash_table_t* env) {
         case OBJ_TYPE_USHORT: return (obj_t*) obj_ushort_apply((obj_ushort_t*)self, args, env);
         case OBJ_TYPE_LONG: return (obj_t*) obj_long_apply((obj_long_t*)self, args, env);
         case OBJ_TYPE_ULONG: return (obj_t*) obj_ulong_apply((obj_ulong_t*)self, args, env);
+        case OBJ_TYPE_SIZE_T: return (obj_t*) obj_size_t_apply((obj_size_t_t*)self, args, env);
         case OBJ_TYPE_FLOAT: return (obj_t*) obj_float_apply((obj_float_t*)self, args, env);
         case OBJ_TYPE_DOUBLE: return (obj_t*) obj_double_apply((obj_double_t*)self, args, env);
         case OBJ_TYPE_SYMBOL: return (obj_t*) obj_symbol_apply((obj_symbol_t*)self, args, env);

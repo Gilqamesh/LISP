@@ -16,6 +16,7 @@
 # include "obj_ushort.h"
 # include "obj_long.h"
 # include "obj_ulong.h"
+# include "obj_size_t.h"
 # include "obj_float.h"
 # include "obj_double.h"
 # include "obj_symbol.h"
@@ -29,5 +30,14 @@
 # include "obj_closure.h"
 # include "obj_primitive.h"
 # include "obj_repl.h"
+
+typedef struct universe_t {
+    int argc;
+    char** argv;
+} universe_t;
+
+extern universe_t UNIVERSE;
+void universe_init(int argc, char** argv);
+void universe_destroy(void);
 
 #endif // UNIVERSE_H

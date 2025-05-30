@@ -13,6 +13,7 @@ short
 ushort
 long
 ulong
+size_t
 float
 double
 symbol

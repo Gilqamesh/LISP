@@ -5,7 +5,9 @@
 
 typedef struct obj_array_t {
     obj_t base;
-    darr_t objs;
+    size_t objs_capacity;
+    size_t objs_fill;
+    obj_t** objs;
 } obj_array_t;
 
 obj_array_t* obj_array_new();
@@ -21,6 +23,9 @@ obj_t* obj_array_eval(const obj_array_t* self, obj_hash_table_t* env);
 obj_t* obj_array_apply(const obj_array_t* self, obj_array_t* args, obj_hash_table_t* env);
 
 obj_t* obj_array_push(obj_array_t* self, obj_t* obj);
+void obj_array_push_array(obj_array_t* self, const obj_array_t* other);
+obj_t* obj_array_pop(obj_array_t* self);
+void obj_array_clear(obj_array_t* self);
 
 size_t obj_array_size(const obj_array_t* self);
 obj_t* obj_array_read(const obj_array_t* self, size_t index);

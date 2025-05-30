@@ -1,6 +1,6 @@
 #include "universe.h"
 
-obj_error_t* obj_error_new(obj_string_t* message, const char* caller, const char* stringified_args, ...) {
+obj_error_t* obj_error_new(obj_string_t* message, const char* file, const char* caller, int line, const char* stringified_args, ...) {
     obj_error_t* self = (obj_error_t*) malloc(sizeof(obj_error_t));
     obj_init((obj_t*) self, OBJ_TYPE_ERROR);
     va_list args;
@@ -8,10 +8,31 @@ obj_error_t* obj_error_new(obj_string_t* message, const char* caller, const char
     self->message = obj_string_new();
     obj_string_push_cstr(self->message, "\"");
     obj_string_push_string(self->message, message);
-    obj_string_push_cstr(self->message, "\"");
-    obj_string_push_cstr(self->message, " [in '");
-    obj_string_push_cstr(self->message, caller);
-    obj_string_push_cstr(self->message, "']");
+    obj_string_push_cstr(self->message, "\"\n");
+
+    void* backtrace_buffer[16];
+    int backtrace_size = backtrace(backtrace_buffer, sizeof(backtrace_buffer) / sizeof(backtrace_buffer[0]));
+        obj_string_push_cstr(self->message, "backtrace:\n");
+        for (int i = 0; i < backtrace_size; ++i) {
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "addr2line -f -p -e %s %p", UNIVERSE.argv[0], backtrace_buffer[i]);
+
+        FILE *fp = popen(cmd, "r");
+        if (!fp) {
+            perror("popen");
+        }
+
+        char buf[512];
+        while (fgets(buf, sizeof(buf), fp)) {
+            obj_string_push_cstr(self->message, "%d: '%s'", i, buf);
+        }
+
+        pclose(fp);
+    }
+
+    obj_string_push_cstr(self->message, "in file: '%s'\n", file);
+    obj_string_push_cstr(self->message, "in function: '%s'\n", caller);
+    obj_string_push_cstr(self->message, "at line: %d\n", line);
     while (*stringified_args) {
         if (*stringified_args == ',') {
             ++stringified_args;

@@ -3,7 +3,6 @@
 
 # include "libc.h"
 
-# include "darr.h"
 # include "hash_table.h"
 # include "err.h"
 typedef struct obj_lisp_type_t obj_lisp_type_t;
@@ -21,6 +20,7 @@ typedef struct obj_short_t obj_short_t;
 typedef struct obj_ushort_t obj_ushort_t;
 typedef struct obj_long_t obj_long_t;
 typedef struct obj_ulong_t obj_ulong_t;
+typedef struct obj_size_t_t obj_size_t_t;
 typedef struct obj_float_t obj_float_t;
 typedef struct obj_double_t obj_double_t;
 typedef struct obj_symbol_t obj_symbol_t;
@@ -51,6 +51,7 @@ typedef enum obj_type_t {
     OBJ_TYPE_USHORT,
     OBJ_TYPE_LONG,
     OBJ_TYPE_ULONG,
+    OBJ_TYPE_SIZE_T,
     OBJ_TYPE_FLOAT,
     OBJ_TYPE_DOUBLE,
     OBJ_TYPE_SYMBOL,

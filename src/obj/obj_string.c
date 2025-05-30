@@ -78,7 +78,6 @@ obj_string_t* obj_string_vnew_cstr(const char* format, va_list args) {
 void obj_string_delete(obj_string_t* self) {
     free(self->data);
     free(self);
-    memset(self, 0, sizeof(*self));
 }
 
 bool is_string(const obj_t* self) {

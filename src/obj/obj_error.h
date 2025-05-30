@@ -8,9 +8,9 @@ typedef struct obj_error_t {
     obj_string_t* message;
 } obj_error_t;
 
-obj_error_t* obj_error_new(obj_string_t* message, const char* caller, const char* stringified_args, ... /* objs, NULL */);
+obj_error_t* obj_error_new(obj_string_t* message, const char* file, const char* caller, int line, const char* stringified_args, ... /* objs, NULL */);
 // example usage: err(str_create_cstr("blah"), obj1, obj2)
-# define throw(message, ...) obj_error_new(message, __FUNCTION__, #__VA_ARGS__, __VA_ARGS__, 0)
+# define throw(message, ...) obj_error_new(message, __FILE__, __FUNCTION__, __LINE__, #__VA_ARGS__, __VA_ARGS__, 0)
 void obj_error_delete(obj_error_t* self);
 
 bool is_error(const obj_t* self);

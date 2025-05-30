@@ -13,6 +13,7 @@ FILE* fp_type_names = 0;
 FILE* fp_obj_h = 0;
 FILE* fp_obj_c = 0;
 FILE* fp_universe_h = 0;
+FILE* fp_universe_c = 0;
 
 void exit_clean(const char* format, ...) {
     if (fp_type_names) {
@@ -30,6 +31,10 @@ void exit_clean(const char* format, ...) {
     if (fp_universe_h) {
         fclose(fp_universe_h);
         fp_universe_h = 0;
+    }
+    if (fp_universe_c) {
+        fclose(fp_universe_c);
+        fp_universe_c = 0;
     }
     va_list args;
     va_start(args, format);
@@ -75,6 +80,15 @@ int main(int argc, char** argv ) {
     if (!fp_universe_h) {
         exit_clean("Error: Could not create universe.h\n");
     }
+
+    char obj_universe_c_base[256] = "universe.c";
+    char obj_universe_c_path[256];
+    snprintf(obj_universe_c_path, sizeof(obj_universe_c_path), "%s/%s", output_dir, obj_universe_c_base);
+    fp_universe_c = fopen(obj_universe_c_path, "w");
+    if (!fp_universe_c) {
+        exit_clean("Error: Could not create universe.c\n");
+    }
+
     fprintf(fp_universe_h, "#ifndef UNIVERSE_H\n");
     fprintf(fp_universe_h, "# define UNIVERSE_H\n");
     fprintf(fp_universe_h, "\n");
@@ -203,7 +217,28 @@ int main(int argc, char** argv ) {
     }
 
     fprintf(fp_universe_h, "\n");
+    fprintf(fp_universe_h, "typedef struct universe_t {\n");
+    fprintf(fp_universe_h, "    int argc;\n");
+    fprintf(fp_universe_h, "    char** argv;\n");
+    fprintf(fp_universe_h, "} universe_t;\n");
+    fprintf(fp_universe_h, "\n");
+    fprintf(fp_universe_h, "extern universe_t UNIVERSE;\n");
+    fprintf(fp_universe_h, "void universe_init(int argc, char** argv);\n");
+    fprintf(fp_universe_h, "void universe_destroy(void);\n");
+    fprintf(fp_universe_h, "\n");
     fprintf(fp_universe_h, "#endif // UNIVERSE_H\n");
+
+    fprintf(fp_universe_c, "#include \"universe.h\"\n");
+    fprintf(fp_universe_c, "\n");
+    fprintf(fp_universe_c, "universe_t UNIVERSE;\n");
+    fprintf(fp_universe_c, "\n");
+    fprintf(fp_universe_c, "void universe_init(int argc, char** argv) {\n");
+    fprintf(fp_universe_c, "    UNIVERSE.argc = argc;\n");
+    fprintf(fp_universe_c, "    UNIVERSE.argv = argv;\n");
+    fprintf(fp_universe_c, "}\n");
+    fprintf(fp_universe_c, "\n");
+    fprintf(fp_universe_c, "void universe_destroy(void) {\n");
+    fprintf(fp_universe_c, "}\n");
 
     fprintf(fp_obj_h, "#ifndef OBJ_H\n");
     fprintf(fp_obj_h, "# define OBJ_H\n");
@@ -212,7 +247,6 @@ int main(int argc, char** argv ) {
     fprintf(fp_obj_h, "\n");
 
     // todo: port these to obj types
-    fprintf(fp_obj_h, "# include \"darr.h\"\n");
     fprintf(fp_obj_h, "# include \"hash_table.h\"\n");
     fprintf(fp_obj_h, "# include \"err.h\"\n");
 

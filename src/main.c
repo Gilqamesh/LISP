@@ -1,6 +1,8 @@
 #include "universe.h"
 
-int main() {
+int main(int argc, char** argv) {
+    universe_init(argc, argv);
+
     obj_hash_table_t* env = obj_hash_table_new();
     try {
         obj_repl_t* repl = obj_repl_new();
@@ -14,6 +16,8 @@ int main() {
         obj_string_delete(str);
     }
     obj_hash_table_delete(env);
+
+    universe_destroy();
 
     return 0;
 }
