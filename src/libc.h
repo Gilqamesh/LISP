@@ -10,5 +10,7 @@
 # include <ctype.h>
 # include <stdarg.h>
 # include <stdint.h>
+# include <setjmp.h>
+# include <stdalign.h>
 
 # endif // LIBC_H

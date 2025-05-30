@@ -1,0 +1,22 @@
+#ifndef OBJ_EOF_H
+# define OBJ_EOF_H
+
+# include "obj.h"
+
+typedef struct obj_eof_t {
+    obj_t base;
+} obj_eof_t;
+
+obj_eof_t* obj_eof_new();
+void obj_eof_delete(obj_eof_t* self);
+
+bool is_eof(const obj_t* self);
+ffi_type* obj_eof_to_ffi_type(const obj_eof_t* self);
+void obj_eof_to_string(const obj_eof_t* self, str_t* str);
+obj_t* obj_eof_copy(const obj_eof_t* self);
+bool obj_eof_equal(const obj_eof_t* self, const obj_eof_t* other);
+size_t obj_eof_hash(const obj_eof_t* self);
+obj_t* obj_eof_eval(const obj_eof_t* self, obj_hash_table_t* env);
+obj_t* obj_eof_apply(const obj_eof_t* self, obj_array_t* args, obj_hash_table_t* env);
+
+#endif // OBJ_EOF_H
