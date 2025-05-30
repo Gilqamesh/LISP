@@ -1,4 +1,4 @@
-#include "obj_void.h"
+#include "universe.h"
 
 obj_void_t* obj_void_new() {
     obj_void_t* self = (obj_void_t*) malloc(sizeof(obj_void_t));
@@ -16,14 +16,14 @@ bool is_void(const obj_t* self) {
     return self->type == OBJ_TYPE_VOID;
 }
 
-ffi_type* obj_void_to_ffi_type(const obj_void_t* self) {
+obj_ffi_t* obj_void_to_ffi(const obj_void_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_void_to_string(const obj_void_t* self, str_t* str) {
-    str_push_cstr(str, "<void ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_void_to_string(const obj_void_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<void ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_void_copy(const obj_void_t* self) {

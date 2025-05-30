@@ -1,4 +1,4 @@
-#include "obj_macro.h"
+#include "universe.h"
 
 obj_macro_t* obj_macro_new() {
     obj_macro_t* self = (obj_macro_t*) malloc(sizeof(obj_macro_t));
@@ -16,14 +16,14 @@ bool is_macro(const obj_t* self) {
     return self->type == OBJ_TYPE_MACRO;
 }
 
-ffi_type* obj_macro_to_ffi_type(const obj_macro_t* self) {
+obj_ffi_t* obj_macro_to_ffi(const obj_macro_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_macro_to_string(const obj_macro_t* self, str_t* str) {
-    str_push_cstr(str, "<macro ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_macro_to_string(const obj_macro_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<macro ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_macro_copy(const obj_macro_t* self) {

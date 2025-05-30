@@ -37,7 +37,7 @@ obj_file_t* obj_file_new(const char* path, const char* mode) {
     self->path = path;
     self->fp = fopen(path, mode);
     if (!self->fp) {
-        throw(str_new_cstr("Failed to open file [path: '%s', mode: '%s']", path, mode), self);
+        throw(obj_string_new_cstr("Failed to open file [path: '%s', mode: '%s']", path, mode), self);
     }
     return self;
 }
@@ -53,14 +53,14 @@ bool is_file(const obj_t* self) {
     return self->type == OBJ_TYPE_FILE;
 }
 
-ffi_type* obj_file_to_ffi_type(const obj_file_t* self) {
+obj_ffi_t* obj_file_to_ffi(const obj_file_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_file_to_string(const obj_file_t* self, str_t* str) {
-    str_push_cstr(str, "<file ", obj_type_to_string(obj_get_type((obj_t*) self)));
-    str_push_cstr(str, "'%s'", self->path);
-    str_push_cstr(str, ">");
+void obj_file_to_string(const obj_file_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<file ", obj_type_to_string(obj_get_type((obj_t*) self)));
+    obj_string_push_cstr(str, "'%s'", self->path);
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_file_copy(const obj_file_t* self) {
@@ -94,15 +94,15 @@ obj_t* obj_file_read(const obj_file_t* self) {
 
     switch (obj_file_read_char(self)) {
     case '"': {
-        str_t lexeme = str_new();
+        obj_string_t* lexeme = obj_string_new();
         while (!obj_file_is_at_end(self)) {
             char c = obj_file_read_char(self);
             if (c == '"') {
-                return (obj_t*) obj_string_new(lexeme);
+                return (obj_t*) lexeme;
             }
-            str_push_cstr(&lexeme, "%c", c);
+            obj_string_push_cstr(lexeme, "%c", c);
         }
-        throw(str_new_cstr("Unterminated string literal"), obj_string_new(lexeme));
+        throw(obj_string_new_cstr("Unterminated string literal"), lexeme);
     } break ;
     case '\'': {
     } break ;

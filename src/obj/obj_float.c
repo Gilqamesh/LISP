@@ -1,4 +1,4 @@
-#include "obj_float.h"
+#include "universe.h"
 
 obj_float_t* obj_float_new() {
     obj_float_t* self = (obj_float_t*) malloc(sizeof(obj_float_t));
@@ -16,14 +16,14 @@ bool is_float(const obj_t* self) {
     return self->type == OBJ_TYPE_FLOAT;
 }
 
-ffi_type* obj_float_to_ffi_type(const obj_float_t* self) {
+obj_ffi_t* obj_float_to_ffi(const obj_float_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_float_to_string(const obj_float_t* self, str_t* str) {
-    str_push_cstr(str, "<float ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_float_to_string(const obj_float_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<float ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_float_copy(const obj_float_t* self) {

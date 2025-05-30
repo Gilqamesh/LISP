@@ -1,4 +1,4 @@
-#include "obj_repl.h"
+#include "universe.h"
 
 obj_repl_t* obj_repl_new() {
     obj_repl_t* self = (obj_repl_t*) malloc(sizeof(obj_repl_t));
@@ -16,14 +16,14 @@ bool is_repl(const obj_t* self) {
     return self->type == OBJ_TYPE_REPL;
 }
 
-ffi_type* obj_repl_to_ffi_type(const obj_repl_t* self) {
+obj_ffi_t* obj_repl_to_ffi(const obj_repl_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_repl_to_string(const obj_repl_t* self, str_t* str) {
-    str_push_cstr(str, "<repl ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_repl_to_string(const obj_repl_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<repl ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_repl_copy(const obj_repl_t* self) {

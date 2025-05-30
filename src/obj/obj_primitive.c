@@ -1,4 +1,4 @@
-#include "obj_primitive.h"
+#include "universe.h"
 
 obj_primitive_t* obj_primitive_new() {
     obj_primitive_t* self = (obj_primitive_t*) malloc(sizeof(obj_primitive_t));
@@ -16,14 +16,14 @@ bool is_primitive(const obj_t* self) {
     return self->type == OBJ_TYPE_PRIMITIVE;
 }
 
-ffi_type* obj_primitive_to_ffi_type(const obj_primitive_t* self) {
+obj_ffi_t* obj_primitive_to_ffi(const obj_primitive_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_primitive_to_string(const obj_primitive_t* self, str_t* str) {
-    str_push_cstr(str, "<primitive ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_primitive_to_string(const obj_primitive_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<primitive ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_primitive_copy(const obj_primitive_t* self) {

@@ -1,4 +1,4 @@
-#include "obj_eof.h"
+#include "universe.h"
 
 obj_eof_t* obj_eof_new() {
     obj_eof_t* self = (obj_eof_t*) malloc(sizeof(obj_eof_t));
@@ -16,14 +16,14 @@ bool is_eof(const obj_t* self) {
     return self->type == OBJ_TYPE_EOF;
 }
 
-ffi_type* obj_eof_to_ffi_type(const obj_eof_t* self) {
+obj_ffi_t* obj_eof_to_ffi(const obj_eof_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_eof_to_string(const obj_eof_t* self, str_t* str) {
-    str_push_cstr(str, "<eof ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_eof_to_string(const obj_eof_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<eof ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_eof_copy(const obj_eof_t* self) {

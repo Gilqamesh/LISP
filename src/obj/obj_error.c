@@ -1,17 +1,17 @@
-#include "obj_error.h"
+#include "universe.h"
 
-obj_error_t* obj_error_new(str_t message, const char* caller, const char* stringified_args, ...) {
+obj_error_t* obj_error_new(obj_string_t* message, const char* caller, const char* stringified_args, ...) {
     obj_error_t* self = (obj_error_t*) malloc(sizeof(obj_error_t));
     obj_init((obj_t*) self, OBJ_TYPE_ERROR);
     va_list args;
     va_start(args, stringified_args);
-    self->message = str_new();
-    str_push_cstr(&self->message, "\"");
-    str_push_str(&self->message, &message);
-    str_push_cstr(&self->message, "\"");
-    str_push_cstr(&self->message, " [in '");
-    str_push_cstr(&self->message, caller);
-    str_push_cstr(&self->message, "']");
+    self->message = obj_string_new();
+    obj_string_push_cstr(self->message, "\"");
+    obj_string_push_string(self->message, message);
+    obj_string_push_cstr(self->message, "\"");
+    obj_string_push_cstr(self->message, " [in '");
+    obj_string_push_cstr(self->message, caller);
+    obj_string_push_cstr(self->message, "']");
     while (*stringified_args) {
         if (*stringified_args == ',') {
             ++stringified_args;
@@ -25,12 +25,12 @@ obj_error_t* obj_error_new(str_t message, const char* caller, const char* string
             }
             assert(param_fill < sizeof(param));
             param[param_fill] = '\0';
-            str_push_cstr(&self->message, " (%s", param);
+            obj_string_push_cstr(self->message, " (%s", param);
             obj_t* obj = va_arg(args, obj_t*);
             assert(obj);
-            str_push_cstr(&self->message, " ");
-            obj_to_string(obj, &self->message);
-            str_push_cstr(&self->message, ")");
+            obj_string_push_cstr(self->message, " ");
+            obj_to_string(obj, self->message);
+            obj_string_push_cstr(self->message, ")");
         }
     }
     va_end(args);
@@ -39,7 +39,7 @@ obj_error_t* obj_error_new(str_t message, const char* caller, const char* string
 }
 
 void obj_error_delete(obj_error_t* self) {
-    str_delete(&self->message);
+    obj_string_delete(self->message);
     free(self);
 }
 
@@ -47,14 +47,14 @@ bool is_error(const obj_t* self) {
     return self->type == OBJ_TYPE_ERROR;
 }
 
-ffi_type* obj_error_to_ffi_type(const obj_error_t* self) {
+obj_ffi_t* obj_error_to_ffi(const obj_error_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_error_to_string(const obj_error_t* self, str_t* str) {
-    str_push_cstr(str, "<error ", obj_type_to_string(obj_get_type((obj_t*) self)));
-    str_push_str(str, &self->message);
-    str_push_cstr(str, ">");
+void obj_error_to_string(const obj_error_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<error ", obj_type_to_string(obj_get_type((obj_t*) self)));
+    obj_string_push_string(str, self->message);
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_error_copy(const obj_error_t* self) {

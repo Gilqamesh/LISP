@@ -2,43 +2,82 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 typedef struct type_t {
     char name[256];
     struct type_t* next;
 } type_t;
 
+FILE* fp_type_names = 0;
+FILE* fp_obj_h = 0;
+FILE* fp_obj_c = 0;
+FILE* fp_universe_h = 0;
+
+void exit_clean(const char* format, ...) {
+    if (fp_type_names) {
+        fclose(fp_type_names);
+        fp_type_names = 0;
+    }
+    if (fp_obj_h) {
+        fclose(fp_obj_h);
+        fp_obj_h = 0;
+    }
+    if (fp_obj_c) {
+        fclose(fp_obj_c);
+        fp_obj_c = 0;
+    }
+    if (fp_universe_h) {
+        fclose(fp_universe_h);
+        fp_universe_h = 0;
+    }
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+
+    exit(0);
+}
+
 int main(int argc, char** argv ) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <type-names.txt> <output-dir>\n", argv[0]);
-        return 1;
+        exit_clean("Usage: %s <type-names.txt> <output-dir>\n", argv[0]);
     }
     const char* obj_types_path = argv[1];
     const char* output_dir = argv[2];
 
-    FILE* fp_type_names = fopen(obj_types_path, "r");
+    fp_type_names = fopen(obj_types_path, "r");
     if (!fp_type_names) {
-        fprintf(stderr, "Error: Could not open %s\n", obj_types_path);
-        return 1;
+        exit_clean("Error: Could not open %s\n", obj_types_path);
     }
 
-    char obj_h[256];
-    snprintf(obj_h, sizeof(obj_h), "%s/obj.h", output_dir);
-    FILE* fp_obj_h = fopen(obj_h, "w");
+    char obj_h_base[256] = "obj.h";
+    char obj_h_path[256];
+    snprintf(obj_h_path, sizeof(obj_h_path), "%s/%s", output_dir, obj_h_base);
+    fp_obj_h = fopen(obj_h_path, "w");
     if (!fp_obj_h) {
-        fprintf(stderr, "Error: Could not create %s\n", obj_h);
-        fclose(fp_type_names);
-        return 1;
+        exit_clean("Error: Could not create %s\n", obj_h_path);
     }
-    char obj_c[256];
-    snprintf(obj_c, sizeof(obj_c), "%s/obj.c", output_dir);
-    FILE* fp_obj_c = fopen(obj_c, "w");
+
+    char obj_c_base[256] = "obj.c";
+    char obj_c_path[256];
+    snprintf(obj_c_path, sizeof(obj_c_path), "%s/%s", output_dir, obj_c_base);
+    fp_obj_c = fopen(obj_c_path, "w");
     if (!fp_obj_c) {
-        fprintf(stderr, "Error: Could not create %s\n", obj_c);
-        fclose(fp_type_names);
-        fclose(fp_obj_h);
-        return 1;
+        exit_clean("Error: Could not create %s\n", obj_c_path);
     }
+
+    char obj_universe_h_base[256] = "universe.h";
+    char obj_universe_h_path[256];
+    snprintf(obj_universe_h_path, sizeof(obj_universe_h_path), "%s/%s", output_dir, obj_universe_h_base);
+    fp_universe_h = fopen(obj_universe_h_path, "w");
+    if (!fp_universe_h) {
+        exit_clean("Error: Could not create universe.h\n");
+    }
+    fprintf(fp_universe_h, "#ifndef UNIVERSE_H\n");
+    fprintf(fp_universe_h, "# define UNIVERSE_H\n");
+    fprintf(fp_universe_h, "\n");
 
     type_t* type_head = NULL;
     type_t** type_tail = &type_head;
@@ -62,24 +101,28 @@ int main(int argc, char** argv ) {
         (*type_tail)->next = NULL;
         type_tail = &(*type_tail)->next;
 
-        char header[256];
-        char source[256];
-        snprintf(header, sizeof(header), "%s/obj_%s.h", output_dir, type_name);
-        snprintf(source, sizeof(source), "%s/obj_%s.c", output_dir, type_name);
-        FILE* fp = fopen(header, "r");
+        char header_base[256];
+        snprintf(header_base, sizeof(header_base), "obj_%s.h", type_name);
+        char header_path[256];
+        char source_base[256];
+        snprintf(source_base, sizeof(source_base), "obj_%s.c", type_name);
+        char source_path[256];
+        snprintf(header_path, sizeof(header_path), "%s/%s", output_dir, header_base);
+        snprintf(source_path, sizeof(source_path), "%s/%s", output_dir, source_base);
+
+        fprintf(fp_universe_h, "# include \"%s\"\n", header_base);
+
+        FILE* fp = fopen(header_path, "r");
         if (!fp) {
-            fp = fopen(header, "w");
+            fp = fopen(header_path, "w");
             if (!fp) {
-                fprintf(stderr, "Error: Could not create %s\n", header);
-                fclose(fp_type_names);
-                fclose(fp_obj_h);
-                fclose(fp_obj_c);
-                return 1;
+                fclose(fp);
+                exit_clean("Error: Could not create %s\n", header_path);
             }
             fprintf(fp, "#ifndef OBJ_%s_H\n", type_name_upper);
             fprintf(fp, "# define OBJ_%s_H\n", type_name_upper);
             fprintf(fp, "\n");
-            fprintf(fp, "# include \"obj.h\"\n");
+            fprintf(fp, "# include \"%s\"\n", obj_h_base);
             fprintf(fp, "\n");
             fprintf(fp, "typedef struct obj_%s_t {\n", type_name);
             fprintf(fp, "    obj_t base;\n");
@@ -89,8 +132,8 @@ int main(int argc, char** argv ) {
             fprintf(fp, "void obj_%s_delete(obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "\n");
             fprintf(fp, "bool is_%s(const obj_t* self);\n", type_name);
-            fprintf(fp, "ffi_type* obj_%s_to_ffi_type(const obj_%s_t* self);\n", type_name, type_name);
-            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, str_t* str);\n", type_name, type_name);
+            fprintf(fp, "obj_ffi_t* obj_%s_to_ffi(const obj_%s_t* self);\n", type_name, type_name);
+            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other);\n", type_name, type_name);
             fprintf(fp, "obj_t* obj_%s_copy(const obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other);\n", type_name, type_name, type_name);
             fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self);\n", type_name, type_name);
@@ -100,17 +143,13 @@ int main(int argc, char** argv ) {
             fprintf(fp, "#endif // OBJ_%s_H\n", type_name_upper);
             fclose(fp);
         }
-        fp = fopen(source, "r");
+        fp = fopen(source_path, "r");
         if (!fp) {
-            fp = fopen(source, "w");
+            fp = fopen(source_path, "w");
             if (!fp) {
-                fprintf(stderr, "Error: Could not create %s\n", source);
-                fclose(fp_type_names);
-                fclose(fp_obj_h);
-                fclose(fp_obj_c);
-                return 1;
+                exit_clean("Error: Could not create %s\n", source_path);
             }
-            fprintf(fp, "#include \"obj_%s.h\"\n", type_name);
+            fprintf(fp, "#include \"%s\"\n", obj_universe_h_base);
             fprintf(fp, "\n");
             fprintf(fp, "obj_%s_t* obj_%s_new() {\n", type_name, type_name);
             fprintf(fp, "    obj_%s_t* self = (obj_%s_t*) malloc(sizeof(obj_%s_t));\n", type_name, type_name, type_name);
@@ -128,14 +167,14 @@ int main(int argc, char** argv ) {
             fprintf(fp, "    return self->type == OBJ_TYPE_%s;\n", type_name_upper);
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "ffi_type* obj_%s_to_ffi_type(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "obj_ffi_t* obj_%s_to_ffi(const obj_%s_t* self) {\n", type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, str_t* str) {\n", type_name, type_name);
-            fprintf(fp, "    str_push_cstr(str, \"<%s \", obj_type_to_string(obj_get_type((obj_t*) self)));\n", type_name);
+            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other) {\n", type_name, type_name);
+            fprintf(fp, "    obj_string_push_cstr(other, \"<%s \", obj_type_to_string(obj_get_type((obj_t*) self)));\n", type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
-            fprintf(fp, "    str_push_cstr(str, \">\");\n");
+            fprintf(fp, "    obj_string_push_cstr(other, \">\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
             fprintf(fp, "obj_t* obj_%s_copy(const obj_%s_t* self) {\n", type_name, type_name);
@@ -163,30 +202,29 @@ int main(int argc, char** argv ) {
         }
     }
 
-    fprintf(fp_obj_h,
-        "#ifndef OBJ_H\n"
-        "# define OBJ_H\n"
-        "\n"
-        "# include \"libc.h\"\n"
-        "# include \"str.h\"\n"
-        "# include \"darr.h\"\n"
-        "# include \"hash_table.h\"\n"
-        "# include \"err.h\"\n"
-        "# include \"ffi.h\"\n"
-        "\n"
-    );
+    fprintf(fp_universe_h, "\n");
+    fprintf(fp_universe_h, "#endif // UNIVERSE_H\n");
 
-    // forward declarations
+    fprintf(fp_obj_h, "#ifndef OBJ_H\n");
+    fprintf(fp_obj_h, "# define OBJ_H\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "# include \"libc.h\"\n");
+    fprintf(fp_obj_h, "\n");
+
+    // todo: port these to obj types
+    fprintf(fp_obj_h, "# include \"darr.h\"\n");
+    fprintf(fp_obj_h, "# include \"hash_table.h\"\n");
+    fprintf(fp_obj_h, "# include \"err.h\"\n");
+
+
     type_t* type_cur = type_head;
     while (type_cur) {
         fprintf(fp_obj_h, "typedef struct obj_%s_t obj_%s_t;\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
 
-    fprintf(fp_obj_h,
-        "\n"
-        "typedef enum obj_type_t {\n"
-    );
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "typedef enum obj_type_t {\n");
     type_cur = type_head;
     while (type_cur) {
         fprintf(fp_obj_h, "    OBJ_TYPE_");
@@ -196,32 +234,30 @@ int main(int argc, char** argv ) {
         fprintf(fp_obj_h, ",\n");
         type_cur = type_cur->next;
     }
-    fprintf(fp_obj_h,
-        "    _OBJ_TYPE_SIZE\n"
-        "} obj_type_t;\n"
-        "\n"
-        "const char* obj_type_to_string(obj_type_t type);\n"
-        "\n"
-        "typedef struct obj_t {\n"
-        "    obj_type_t type;\n"
-        "} obj_t;\n"
-        "void obj_init(obj_t* self, obj_type_t type);\n"
-        "obj_type_t obj_get_type(const obj_t* self);\n"
-        "\n"
-        "void obj_to_string(const obj_t* self, str_t* str);\n"
-        "ffi_type* obj_to_ffi_type(const obj_t* self);\n"
-        "obj_t* obj_copy(const obj_t* self);\n"
-        "bool obj_equal(const obj_t* self, const obj_t* other);\n"
-        "size_t obj_hash(const obj_t* self);\n"
-        "obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env);\n"
-        "obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_hash_table_t* env);\n"
-        "\n"
-        "#endif // OBJ_H\n"
-    );
-    fprintf(fp_obj_c,
-        "#include \"obj.h\"\n"
-        "\n"
-    );
+    fprintf(fp_obj_h, "    _OBJ_TYPE_SIZE\n");
+    fprintf(fp_obj_h, "} obj_type_t;\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "const char* obj_type_to_string(obj_type_t type);\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "typedef struct obj_t {\n");
+    fprintf(fp_obj_h, "    obj_type_t type;\n");
+    fprintf(fp_obj_h, "} obj_t;\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h,  "void obj_init(obj_t* self, obj_type_t type);\n");
+    fprintf(fp_obj_h, "obj_type_t obj_get_type(const obj_t* self);\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "void obj_to_string(const obj_t* self, obj_string_t* other);\n");
+    fprintf(fp_obj_h, "obj_ffi_t* obj_to_ffi(const obj_t* self);\n");
+    fprintf(fp_obj_h, "obj_t* obj_copy(const obj_t* self);\n");
+    fprintf(fp_obj_h, "bool obj_equal(const obj_t* self, const obj_t* other);\n");
+    fprintf(fp_obj_h, "size_t obj_hash(const obj_t* self);\n");
+    fprintf(fp_obj_h, "obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env);\n");
+    fprintf(fp_obj_h, "obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_hash_table_t* env);\n");
+    fprintf(fp_obj_h, "\n");
+    fprintf(fp_obj_h, "#endif // OBJ_H\n");
+
+    fprintf(fp_obj_c, "#include \"obj.h\"\n");
+    fprintf(fp_obj_c, "\n");
     type_cur = type_head;
     while (type_cur) {
         fprintf(fp_obj_c, "#include \"obj_%s.h\"\n", type_cur->name);
@@ -255,7 +291,7 @@ int main(int argc, char** argv ) {
         "    return self->type;\n"
         "}\n"
         "\n"
-        "void obj_to_string(const obj_t* self, str_t* str) {\n"
+        "void obj_to_string(const obj_t* self, obj_string_t* other) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -264,7 +300,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": obj_%s_to_string((obj_%s_t*)self, str); break;\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": obj_%s_to_string((obj_%s_t*)self, other); break;\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -272,7 +308,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "ffi_type* obj_to_ffi_type(const obj_t* self) {\n"
+        "obj_ffi_t* obj_to_ffi(const obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -281,7 +317,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_to_ffi_type((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_to_ffi((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -298,7 +334,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_copy((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_copy((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -352,7 +388,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_eval((obj_%s_t*)self, env);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_eval((obj_%s_t*)self, env);\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -369,7 +405,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_apply((obj_%s_t*)self, args, env);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_apply((obj_%s_t*)self, args, env);\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -378,9 +414,5 @@ int main(int argc, char** argv ) {
         "}\n"
     );
 
-    fclose(fp_type_names);
-    fclose(fp_obj_h);
-    fclose(fp_obj_c);
-
-    return 0;
+    exit_clean("Code generation completed successfully.\n");
 }

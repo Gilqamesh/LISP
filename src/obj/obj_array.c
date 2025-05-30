@@ -1,6 +1,4 @@
-#include "obj_array.h"
-
-#include "obj_error.h"
+#include "universe.h"
 
 typedef obj_t* obj_array_element_t;
 
@@ -20,14 +18,14 @@ bool is_array(const obj_t* self) {
     return self->type == OBJ_TYPE_ARRAY;
 }
 
-ffi_type* obj_array_to_ffi_type(const obj_array_t* self) {
+obj_ffi_t* obj_array_to_ffi(const obj_array_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_array_to_string(const obj_array_t* self, str_t* str) {
-    str_push_cstr(str, "<array ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_array_to_string(const obj_array_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<array ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_array_copy(const obj_array_t* self) {
@@ -69,7 +67,7 @@ obj_t* obj_array_read(const obj_array_t* self, size_t index) {
 
 obj_t* obj_array_write(obj_array_t* self, size_t index, obj_t* obj) {
     if (darr_size(&self->objs) <= index) {
-        throw(str_new_cstr("Index out of bounds"), obj, (obj_t*) self);
+        throw(obj_string_new_cstr("Index out of bounds"), obj, (obj_t*) self);
     }
     darr_write(&self->objs, index, &obj);
     return obj;

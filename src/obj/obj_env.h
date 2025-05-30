@@ -11,8 +11,8 @@ obj_env_t* obj_env_new();
 void obj_env_delete(obj_env_t* self);
 
 bool is_env(const obj_t* self);
-ffi_type* obj_env_to_ffi_type(const obj_env_t* self);
-void obj_env_to_string(const obj_env_t* self, str_t* str);
+obj_ffi_t* obj_env_to_ffi(const obj_env_t* self);
+void obj_env_to_string(const obj_env_t* self, obj_string_t* str);
 obj_t* obj_env_copy(const obj_env_t* self);
 bool obj_env_equal(const obj_env_t* self, const obj_env_t* other);
 size_t obj_env_hash(const obj_env_t* self);

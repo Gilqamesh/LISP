@@ -11,8 +11,8 @@ obj_long_t* obj_long_new();
 void obj_long_delete(obj_long_t* self);
 
 bool is_long(const obj_t* self);
-ffi_type* obj_long_to_ffi_type(const obj_long_t* self);
-void obj_long_to_string(const obj_long_t* self, str_t* str);
+obj_ffi_t* obj_long_to_ffi(const obj_long_t* self);
+void obj_long_to_string(const obj_long_t* self, obj_string_t* str);
 obj_t* obj_long_copy(const obj_long_t* self);
 bool obj_long_equal(const obj_long_t* self, const obj_long_t* other);
 size_t obj_long_hash(const obj_long_t* self);

@@ -14,8 +14,8 @@ obj_file_t* obj_file_new(const char* path, const char* mode);
 void obj_file_delete(obj_file_t* self);
 
 bool is_file(const obj_t* self);
-ffi_type* obj_file_to_ffi_type(const obj_file_t* self);
-void obj_file_to_string(const obj_file_t* self, str_t* str);
+obj_ffi_t* obj_file_to_ffi(const obj_file_t* self);
+void obj_file_to_string(const obj_file_t* self, obj_string_t* str);
 obj_t* obj_file_copy(const obj_file_t* self);
 bool obj_file_equal(const obj_file_t* self, const obj_file_t* other);
 size_t obj_file_hash(const obj_file_t* self);

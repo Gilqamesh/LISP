@@ -1,4 +1,4 @@
-#include "obj_nil.h"
+#include "universe.h"
 
 obj_nil_t* obj_nil_new() {
     obj_nil_t* self = (obj_nil_t*) malloc(sizeof(obj_nil_t));
@@ -16,14 +16,14 @@ bool is_nil(const obj_t* self) {
     return self->type == OBJ_TYPE_NIL;
 }
 
-ffi_type* obj_nil_to_ffi_type(const obj_nil_t* self) {
+obj_ffi_t* obj_nil_to_ffi(const obj_nil_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_nil_to_string(const obj_nil_t* self, str_t* str) {
-    str_push_cstr(str, "<nil ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_nil_to_string(const obj_nil_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<nil ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_nil_copy(const obj_nil_t* self) {

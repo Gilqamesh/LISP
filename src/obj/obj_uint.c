@@ -1,4 +1,4 @@
-#include "obj_uint.h"
+#include "universe.h"
 
 obj_uint_t* obj_uint_new() {
     obj_uint_t* self = (obj_uint_t*) malloc(sizeof(obj_uint_t));
@@ -16,14 +16,14 @@ bool is_uint(const obj_t* self) {
     return self->type == OBJ_TYPE_UINT;
 }
 
-ffi_type* obj_uint_to_ffi_type(const obj_uint_t* self) {
+obj_ffi_t* obj_uint_to_ffi(const obj_uint_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_uint_to_string(const obj_uint_t* self, str_t* str) {
-    str_push_cstr(str, "<uint ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_uint_to_string(const obj_uint_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<uint ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_uint_copy(const obj_uint_t* self) {

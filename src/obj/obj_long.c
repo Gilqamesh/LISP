@@ -1,4 +1,4 @@
-#include "obj_long.h"
+#include "universe.h"
 
 obj_long_t* obj_long_new() {
     obj_long_t* self = (obj_long_t*) malloc(sizeof(obj_long_t));
@@ -16,14 +16,14 @@ bool is_long(const obj_t* self) {
     return self->type == OBJ_TYPE_LONG;
 }
 
-ffi_type* obj_long_to_ffi_type(const obj_long_t* self) {
+obj_ffi_t* obj_long_to_ffi(const obj_long_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_long_to_string(const obj_long_t* self, str_t* str) {
-    str_push_cstr(str, "<long ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_long_to_string(const obj_long_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<long ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_long_copy(const obj_long_t* self) {

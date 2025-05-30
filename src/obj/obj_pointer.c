@@ -1,4 +1,4 @@
-#include "obj_pointer.h"
+#include "universe.h"
 
 obj_pointer_t* obj_pointer_new() {
     obj_pointer_t* self = (obj_pointer_t*) malloc(sizeof(obj_pointer_t));
@@ -16,14 +16,14 @@ bool is_pointer(const obj_t* self) {
     return self->type == OBJ_TYPE_POINTER;
 }
 
-ffi_type* obj_pointer_to_ffi_type(const obj_pointer_t* self) {
+obj_ffi_t* obj_pointer_to_ffi(const obj_pointer_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_pointer_to_string(const obj_pointer_t* self, str_t* str) {
-    str_push_cstr(str, "<pointer ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_pointer_to_string(const obj_pointer_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<pointer ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_pointer_copy(const obj_pointer_t* self) {

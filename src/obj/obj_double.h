@@ -11,8 +11,8 @@ obj_double_t* obj_double_new();
 void obj_double_delete(obj_double_t* self);
 
 bool is_double(const obj_t* self);
-ffi_type* obj_double_to_ffi_type(const obj_double_t* self);
-void obj_double_to_string(const obj_double_t* self, str_t* str);
+obj_ffi_t* obj_double_to_ffi(const obj_double_t* self);
+void obj_double_to_string(const obj_double_t* self, obj_string_t* str);
 obj_t* obj_double_copy(const obj_double_t* self);
 bool obj_double_equal(const obj_double_t* self, const obj_double_t* other);
 size_t obj_double_hash(const obj_double_t* self);

@@ -1,4 +1,4 @@
-#include "obj_uchar.h"
+#include "universe.h"
 
 obj_uchar_t* obj_uchar_new() {
     obj_uchar_t* self = (obj_uchar_t*) malloc(sizeof(obj_uchar_t));
@@ -16,14 +16,14 @@ bool is_uchar(const obj_t* self) {
     return self->type == OBJ_TYPE_UCHAR;
 }
 
-ffi_type* obj_uchar_to_ffi_type(const obj_uchar_t* self) {
+obj_ffi_t* obj_uchar_to_ffi(const obj_uchar_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_uchar_to_string(const obj_uchar_t* self, str_t* str) {
-    str_push_cstr(str, "<uchar ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_uchar_to_string(const obj_uchar_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<uchar ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_uchar_copy(const obj_uchar_t* self) {

@@ -1,4 +1,4 @@
-#include "obj_env.h"
+#include "universe.h"
 
 obj_env_t* obj_env_new() {
     obj_env_t* self = (obj_env_t*) malloc(sizeof(obj_env_t));
@@ -16,14 +16,14 @@ bool is_env(const obj_t* self) {
     return self->type == OBJ_TYPE_ENV;
 }
 
-ffi_type* obj_env_to_ffi_type(const obj_env_t* self) {
+obj_ffi_t* obj_env_to_ffi(const obj_env_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_env_to_string(const obj_env_t* self, str_t* str) {
-    str_push_cstr(str, "<env ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_env_to_string(const obj_env_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<env ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_env_copy(const obj_env_t* self) {

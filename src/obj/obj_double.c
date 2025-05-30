@@ -1,4 +1,4 @@
-#include "obj_double.h"
+#include "universe.h"
 
 obj_double_t* obj_double_new() {
     obj_double_t* self = (obj_double_t*) malloc(sizeof(obj_double_t));
@@ -16,14 +16,14 @@ bool is_double(const obj_t* self) {
     return self->type == OBJ_TYPE_DOUBLE;
 }
 
-ffi_type* obj_double_to_ffi_type(const obj_double_t* self) {
+obj_ffi_t* obj_double_to_ffi(const obj_double_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_double_to_string(const obj_double_t* self, str_t* str) {
-    str_push_cstr(str, "<double ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_double_to_string(const obj_double_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<double ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_double_copy(const obj_double_t* self) {

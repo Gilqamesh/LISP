@@ -2,13 +2,13 @@
 #include "str.h"
 
 static size_t str_hash_fn(const void* key) {
-    const str_t* str = (const str_t*)key;
+    const obj_string_t* str = (const obj_string_t*)key;
     return str_hash(str);
 }
 
 static bool str_compare_fn(const void* key1, const void* key2) {
-    const str_t* s1 = (const str_t*)key1;
-    const str_t* s2 = (const str_t*)key2;
+    const obj_string_t* s1 = (const obj_string_t*)key1;
+    const obj_string_t* s2 = (const obj_string_t*)key2;
     return str_cmp_str(s1, s2);
 }
 
@@ -32,21 +32,21 @@ int main() {
     hash_table_entry_t* entry = hash_table_find(&table, &key1);
     assert(entry);
     assert(entry->is_taken);
-    assert(str_cmp_str((str_t*)hash_table_entry_key(&table, entry), &key1));
+    assert(str_cmp_str((obj_string_t*)hash_table_entry_key(&table, entry), &key1));
 
     hash_table_entry_t* first = hash_table_first(&table);
     while (first) {
         assert(first->is_taken);
-        assert(str_cmp_str((str_t*)hash_table_entry_key(&table, entry), &key1) || 
-               str_cmp_str((str_t*)hash_table_entry_key(&table, entry), &key2));
+        assert(str_cmp_str((obj_string_t*)hash_table_entry_key(&table, entry), &key1) || 
+               str_cmp_str((obj_string_t*)hash_table_entry_key(&table, entry), &key2));
         first = hash_table_next(&table, first);
     }
 
     hash_table_entry_t* last = hash_table_last(&table);
     while (last) {
         assert(last->is_taken);
-        assert(str_cmp_str((str_t*)hash_table_entry_key(&table, entry), &key1) || 
-               str_cmp_str((str_t*)hash_table_entry_key(&table, entry), &key2));
+        assert(str_cmp_str((obj_string_t*)hash_table_entry_key(&table, entry), &key1) || 
+               str_cmp_str((obj_string_t*)hash_table_entry_key(&table, entry), &key2));
         last = hash_table_prev(&table, last);
     }
 
@@ -58,7 +58,7 @@ int main() {
     assert(hash_table_size(&table) == 0);
 
     const int size = 100000;
-    str_t* keys = (str_t*) malloc(size * sizeof(str_t));
+    obj_string_t* keys = (obj_string_t*) malloc(size * sizeof(str_t));
 
     for (size_t i = 0; i < size; ++i) {
         keys[i] = str_create_cstr("key%zu", i);

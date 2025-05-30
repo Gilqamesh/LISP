@@ -1,4 +1,4 @@
-#include "obj_bool.h"
+#include "universe.h"
 
 obj_bool_t* obj_bool_new() {
     obj_bool_t* self = (obj_bool_t*) malloc(sizeof(obj_bool_t));
@@ -16,14 +16,14 @@ bool is_bool(const obj_t* self) {
     return self->type == OBJ_TYPE_BOOL;
 }
 
-ffi_type* obj_bool_to_ffi_type(const obj_bool_t* self) {
+obj_ffi_t* obj_bool_to_ffi(const obj_bool_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_bool_to_string(const obj_bool_t* self, str_t* str) {
-    str_push_cstr(str, "<bool ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_bool_to_string(const obj_bool_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<bool ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_bool_copy(const obj_bool_t* self) {

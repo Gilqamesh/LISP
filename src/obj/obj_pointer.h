@@ -11,8 +11,8 @@ obj_pointer_t* obj_pointer_new();
 void obj_pointer_delete(obj_pointer_t* self);
 
 bool is_pointer(const obj_t* self);
-ffi_type* obj_pointer_to_ffi_type(const obj_pointer_t* self);
-void obj_pointer_to_string(const obj_pointer_t* self, str_t* str);
+obj_ffi_t* obj_pointer_to_ffi(const obj_pointer_t* self);
+void obj_pointer_to_string(const obj_pointer_t* self, obj_string_t* str);
 obj_t* obj_pointer_copy(const obj_pointer_t* self);
 bool obj_pointer_equal(const obj_pointer_t* self, const obj_pointer_t* other);
 size_t obj_pointer_hash(const obj_pointer_t* self);

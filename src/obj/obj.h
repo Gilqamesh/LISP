@@ -2,12 +2,10 @@
 # define OBJ_H
 
 # include "libc.h"
-# include "str.h"
+
 # include "darr.h"
 # include "hash_table.h"
 # include "err.h"
-# include "ffi.h"
-
 typedef struct obj_lisp_type_t obj_lisp_type_t;
 typedef struct obj_error_t obj_error_t;
 typedef struct obj_eof_t obj_eof_t;
@@ -74,11 +72,12 @@ const char* obj_type_to_string(obj_type_t type);
 typedef struct obj_t {
     obj_type_t type;
 } obj_t;
+
 void obj_init(obj_t* self, obj_type_t type);
 obj_type_t obj_get_type(const obj_t* self);
 
-void obj_to_string(const obj_t* self, str_t* str);
-ffi_type* obj_to_ffi_type(const obj_t* self);
+void obj_to_string(const obj_t* self, obj_string_t* other);
+obj_ffi_t* obj_to_ffi(const obj_t* self);
 obj_t* obj_copy(const obj_t* self);
 bool obj_equal(const obj_t* self, const obj_t* other);
 size_t obj_hash(const obj_t* self);

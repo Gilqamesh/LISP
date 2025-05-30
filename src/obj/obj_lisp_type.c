@@ -1,4 +1,4 @@
-#include "obj_lisp_type.h"
+#include "universe.h"
 
 obj_lisp_type_t* obj_lisp_type_new() {
     obj_lisp_type_t* self = (obj_lisp_type_t*) malloc(sizeof(obj_lisp_type_t));
@@ -16,14 +16,14 @@ bool is_lisp_type(const obj_t* self) {
     return self->type == OBJ_TYPE_LISP_TYPE;
 }
 
-ffi_type* obj_lisp_type_to_ffi_type(const obj_lisp_type_t* self) {
+obj_ffi_t* obj_lisp_type_to_ffi(const obj_lisp_type_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_lisp_type_to_string(const obj_lisp_type_t* self, str_t* str) {
-    str_push_cstr(str, "<lisp_type ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_lisp_type_to_string(const obj_lisp_type_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<lisp_type ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_lisp_type_copy(const obj_lisp_type_t* self) {

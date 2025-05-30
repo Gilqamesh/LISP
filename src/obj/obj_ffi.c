@@ -1,4 +1,4 @@
-#include "obj_ffi.h"
+#include "universe.h"
 
 obj_ffi_t* obj_ffi_new() {
     obj_ffi_t* self = (obj_ffi_t*) malloc(sizeof(obj_ffi_t));
@@ -16,14 +16,14 @@ bool is_ffi(const obj_t* self) {
     return self->type == OBJ_TYPE_FFI;
 }
 
-ffi_type* obj_ffi_to_ffi_type(const obj_ffi_t* self) {
-    assert(0 && "todo: implement");
+obj_ffi_t* obj_ffi_to_ffi(const obj_ffi_t* self) {
+    return (obj_ffi_t*) self;
 }
 
-void obj_ffi_to_string(const obj_ffi_t* self, str_t* str) {
-    str_push_cstr(str, "<ffi ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_ffi_to_string(const obj_ffi_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<ffi ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_ffi_copy(const obj_ffi_t* self) {

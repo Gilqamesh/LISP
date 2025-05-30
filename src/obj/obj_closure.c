@@ -1,4 +1,4 @@
-#include "obj_closure.h"
+#include "universe.h"
 
 obj_closure_t* obj_closure_new() {
     obj_closure_t* self = (obj_closure_t*) malloc(sizeof(obj_closure_t));
@@ -16,14 +16,14 @@ bool is_closure(const obj_t* self) {
     return self->type == OBJ_TYPE_CLOSURE;
 }
 
-ffi_type* obj_closure_to_ffi_type(const obj_closure_t* self) {
+obj_ffi_t* obj_closure_to_ffi(const obj_closure_t* self) {
     assert(0 && "todo: implement");
 }
 
-void obj_closure_to_string(const obj_closure_t* self, str_t* str) {
-    str_push_cstr(str, "<closure ", obj_type_to_string(obj_get_type((obj_t*) self)));
+void obj_closure_to_string(const obj_closure_t* self, obj_string_t* str) {
+    obj_string_push_cstr(str, "<closure ", obj_type_to_string(obj_get_type((obj_t*) self)));
     assert(0 && "todo: implement");
-    str_push_cstr(str, ">");
+    obj_string_push_cstr(str, ">");
 }
 
 obj_t* obj_closure_copy(const obj_closure_t* self) {

@@ -11,8 +11,8 @@ obj_uchar_t* obj_uchar_new();
 void obj_uchar_delete(obj_uchar_t* self);
 
 bool is_uchar(const obj_t* self);
-ffi_type* obj_uchar_to_ffi_type(const obj_uchar_t* self);
-void obj_uchar_to_string(const obj_uchar_t* self, str_t* str);
+obj_ffi_t* obj_uchar_to_ffi(const obj_uchar_t* self);
+void obj_uchar_to_string(const obj_uchar_t* self, obj_string_t* str);
 obj_t* obj_uchar_copy(const obj_uchar_t* self);
 bool obj_uchar_equal(const obj_uchar_t* self, const obj_uchar_t* other);
 size_t obj_uchar_hash(const obj_uchar_t* self);
