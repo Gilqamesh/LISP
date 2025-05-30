@@ -9,6 +9,8 @@ const char* obj_type_to_string(obj_type_t type) {
     case OBJ_TYPE_VOID: return "void";
     case OBJ_TYPE_POINTER: return "pointer";
     case OBJ_TYPE_BOOL: return "bool";
+    case OBJ_TYPE_INT32: return "int32";
+    case OBJ_TYPE_INT64: return "int64";
     case OBJ_TYPE_CONS: return "cons";
     case OBJ_TYPE_REAL: return "real";
     case OBJ_TYPE_SYMBOL: return "symbol";
@@ -109,6 +111,34 @@ bool is_bool(const obj_t* obj) {
 bool get_bool(const obj_t* obj) {
     assert(is_bool(obj));
     return ((obj_bool_t*)obj)->value;
+}
+
+void obj_int32_init(obj_int32_t* obj_int32, int32_t value) {
+    obj_init(&obj_int32->base, OBJ_TYPE_INT32);
+    obj_int32->value = value;
+}
+
+bool is_int32(const obj_t* obj) {
+    return type(obj) == OBJ_TYPE_INT32;
+}
+
+int32_t get_int32(const obj_t* obj) {
+    assert(is_int32(obj));
+    return ((obj_int32_t*)obj)->value;
+}
+
+void obj_int64_init(obj_int64_t* obj_int64, int64_t value) {
+    obj_init(&obj_int64->base, OBJ_TYPE_INT64);
+    obj_int64->value = value;
+}
+
+bool is_int64(const obj_t* obj) {
+    return type(obj) == OBJ_TYPE_INT64;
+}
+
+int64_t get_int64(const obj_t* obj) {
+    assert(is_int64(obj));
+    return ((obj_int64_t*)obj)->value;
 }
 
 void obj_cons_init(obj_cons_t* obj_cons, obj_t* car, obj_t* cdr) {
@@ -223,50 +253,62 @@ hasher_t* get_env_bindings(const obj_t* obj) {
 }
 
 void obj_ffi_create(obj_ffi_t* obj_ffi) {
+    memset(obj_ffi, 0, sizeof(*obj_ffi));
     obj_init(&obj_ffi->base, OBJ_TYPE_FFI);
-    obj_ffi->arg_types_top = 0;
-    obj_ffi->arg_types_size = 0;
-    obj_ffi->arg_types = NULL;
-    obj_ffi->ret_type = &ffi_type_void;
 }
 
 void obj_ffi_destroy(obj_ffi_t* obj_ffi) {
     if (obj_ffi->arg_types) {
         free(obj_ffi->arg_types);
-        obj_ffi->arg_types = NULL;
     }
-    obj_ffi->arg_types_top = 0;
-    obj_ffi->arg_types_size = 0;
-    obj_ffi->ret_type = &ffi_type_void;
+    memset(obj_ffi, 0, sizeof(*obj_ffi));
 }
 
 bool is_ffi(const obj_t* obj) {
     return type(obj) == OBJ_TYPE_FFI;
 }
 
-void set_ffi_ret_type(obj_t* obj, obj_type_t type) {
+void set_ffi_ret_type(obj_t* obj, obj_t* ret) {
     assert(is_ffi(obj));
+    assert(is_lisp_type(ret));
     obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
-    obj_ffi->ret_type = obj_type_to_ffi_type(type);
+    obj_ffi->ret_type = ret;
+    obj_ffi->ret_type_ffi = obj_type_to_ffi_type(ret);
 }
 
-void add_ffi_arg_type(obj_t* obj, obj_type_t type) {
+obj_t* get_ffi_ret_type(const obj_t* obj) {
     assert(is_ffi(obj));
+    return ((obj_ffi_t*)obj)->ret_type;
+}
+
+void add_ffi_arg_type(obj_t* obj, obj_t* arg) {
+    assert(is_ffi(obj));
+    assert(is_lisp_type(arg));
     obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
     if (obj_ffi->arg_types_size <= obj_ffi->arg_types_top) {
         if (obj_ffi->arg_types_size == 0) {
             obj_ffi->arg_types_size = 4;
+            obj_ffi->ffi_arg_types = malloc(sizeof(*obj_ffi->ffi_arg_types) * obj_ffi->arg_types_size);
             obj_ffi->arg_types = malloc(sizeof(*obj_ffi->arg_types) * obj_ffi->arg_types_size);
         } else {
             obj_ffi->arg_types_size *= 2;
+            obj_ffi->ffi_arg_types = realloc(obj_ffi->ffi_arg_types, sizeof(*obj_ffi->ffi_arg_types) * obj_ffi->arg_types_size);
             obj_ffi->arg_types = realloc(obj_ffi->arg_types, sizeof(*obj_ffi->arg_types) * obj_ffi->arg_types_size);
         }
     }
     assert(obj_ffi->arg_types_top < obj_ffi->arg_types_size);
-    obj_ffi->arg_types[obj_ffi->arg_types_top++] = obj_type_to_ffi_type(type);
+    obj_ffi->arg_types[obj_ffi->arg_types_top] = arg;
+    obj_ffi->ffi_arg_types[obj_ffi->arg_types_top] = obj_type_to_ffi_type(arg);
+    ++obj_ffi->arg_types_top;
 }
 
-int get_ffi_nargs(const obj_t* obj) {
+obj_t* get_ffi_arg_type(const obj_t* obj, size_t index) {
+    assert(is_ffi(obj));
+    assert(index < get_ffi_nargs(obj));
+    return ((obj_ffi_t*)obj)->arg_types[index];
+}
+
+size_t get_ffi_nargs(const obj_t* obj) {
     assert(is_ffi(obj));
     obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
     return obj_ffi->arg_types_top;
@@ -275,26 +317,40 @@ int get_ffi_nargs(const obj_t* obj) {
 bool obj_ffi_finalize(obj_t* obj) {
     assert(is_ffi(obj));
     obj_ffi_t* obj_ffi = (obj_ffi_t*)obj;
-    ffi_status status = ffi_prep_cif(&obj_ffi->cif, FFI_DEFAULT_ABI, obj_ffi->arg_types_top, obj_ffi->ret_type, obj_ffi->arg_types);
+    if (obj_ffi->ret_type == 0) {
+        return false;
+    }
+    ffi_status status = ffi_prep_cif(&obj_ffi->cif, FFI_DEFAULT_ABI, obj_ffi->arg_types_top, obj_ffi->ret_type_ffi, obj_ffi->ffi_arg_types);
     return status == FFI_OK;
 }
 
-obj_type_t ffi_type_to_obj_type(ffi_type* type) {
-    switch (type->type) {
-    case FFI_TYPE_VOID: return OBJ_TYPE_VOID;
-    case FFI_TYPE_SINT32: return OBJ_TYPE_BOOL;
-    case FFI_TYPE_DOUBLE: return OBJ_TYPE_REAL;
-    case FFI_TYPE_POINTER: return OBJ_TYPE_POINTER;
-    default: assert(0 && "Unsupported FFI type");    
+ffi_type* obj_type_to_ffi_type(const obj_t* obj) {
+    switch (get_lisp_type(obj)) {
+    case OBJ_TYPE_VOID: return &ffi_type_void;
+    case OBJ_TYPE_BOOL: return &ffi_type_sint32;
+    case OBJ_TYPE_INT32: return &ffi_type_sint32;
+    case OBJ_TYPE_INT64: return &ffi_type_sint64;
+    case OBJ_TYPE_REAL: return &ffi_type_double;
+    case OBJ_TYPE_POINTER: return &ffi_type_pointer;
+    case OBJ_TYPE_STRING: return &ffi_type_pointer;
+    case OBJ_TYPE_SYMBOL: return &ffi_type_pointer;
+    case OBJ_TYPE_FILE: return &ffi_type_pointer;
+    default: assert(0 && "Unsupported FFI type");
     }
 }
 
-ffi_type* obj_type_to_ffi_type(obj_type_t type) {
-    switch (type) {
-    case OBJ_TYPE_VOID: return &ffi_type_void;
-    case OBJ_TYPE_BOOL: return &ffi_type_sint32;
-    case OBJ_TYPE_REAL: return &ffi_type_double;
-    case OBJ_TYPE_POINTER: return &ffi_type_pointer;
+size_t get_ffi_type_size(const obj_t* obj) {
+    switch (get_lisp_type(obj)) {
+    case OBJ_TYPE_VOID: return 0;
+    case OBJ_TYPE_BOOL: return sizeof(((obj_bool_t*)0)->value);
+    case OBJ_TYPE_INT32: return sizeof(((obj_int32_t*)0)->value);
+    case OBJ_TYPE_INT64: return sizeof(((obj_int64_t*)0)->value);
+    case OBJ_TYPE_REAL: return sizeof(((obj_real_t*)0)->real);
+    case OBJ_TYPE_POINTER: return sizeof(void*);
+    case OBJ_TYPE_STRING: return sizeof(void*);
+    case OBJ_TYPE_SYMBOL: return sizeof(void*);
+    case OBJ_TYPE_FILE: return sizeof(void*);
+    default: assert(0 && "Unsupported FFI type");
     }
 }
 
