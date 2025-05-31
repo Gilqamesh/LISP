@@ -6,18 +6,6 @@ void fn2();
 int main(int argc, char** argv) {
     universe_init(argc, argv);
 
-    fn1();
-
-    universe_deinit();
-
-    return 0;
-}
-
-void fn1() {
-    fn2();
-}
-
-void fn2() {
     try {
         obj_array_t* array = obj_array_new();
         assert(array != NULL);
@@ -44,9 +32,9 @@ void fn2() {
         assert(array_copy != NULL);
         assert(is_array((obj_t*)array_copy));
         assert(obj_array_size(array_copy) == 3);
-        assert(obj_array_read(array_copy, 0) == obj1);
-        assert(obj_array_read(array_copy, 1) == obj2);
-        assert(obj_array_read(array_copy, 2) == obj1);
+        assert(obj_equal(obj_array_read(array_copy, 0), obj1));
+        assert(obj_equal(obj_array_read(array_copy, 1), obj2));
+        assert(obj_equal(obj_array_read(array_copy, 2), obj1));
         assert(obj_array_equal(array, array_copy));
         obj_array_delete(array_copy);
 
@@ -63,4 +51,6 @@ void fn2() {
         printf("%s\n", obj_string_cstr(str));
         obj_string_delete(str);
     }
+
+    universe_deinit();
 }

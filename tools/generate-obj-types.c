@@ -92,6 +92,8 @@ int main(int argc, char** argv ) {
     fprintf(fp_universe_h, "#ifndef UNIVERSE_H\n");
     fprintf(fp_universe_h, "# define UNIVERSE_H\n");
     fprintf(fp_universe_h, "\n");
+    fprintf(fp_universe_h, "# include <backtrace.h>\n");
+    fprintf(fp_universe_h, "\n");
 
     type_t* type_head = NULL;
     type_t** type_tail = &type_head;
@@ -138,9 +140,9 @@ int main(int argc, char** argv ) {
             fprintf(fp, "\n");
             fprintf(fp, "# include \"%s\"\n", obj_h_base);
             fprintf(fp, "\n");
-            fprintf(fp, "typedef struct obj_%s_t {\n", type_name);
+            fprintf(fp, "struct obj_%s_t {\n", type_name);
             fprintf(fp, "    obj_t base;\n");
-            fprintf(fp, "} obj_%s_t;\n", type_name);
+            fprintf(fp, "};\n");
             fprintf(fp, "\n");
             fprintf(fp, "obj_%s_t* obj_%s_new();\n", type_name, type_name);
             fprintf(fp, "void obj_%s_delete(obj_%s_t* self);\n", type_name, type_name);
@@ -148,7 +150,7 @@ int main(int argc, char** argv ) {
             fprintf(fp, "bool is_%s(const obj_t* self);\n", type_name);
             fprintf(fp, "obj_ffi_t* obj_%s_to_ffi(const obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other);\n", type_name, type_name);
-            fprintf(fp, "obj_t* obj_%s_copy(const obj_%s_t* self);\n", type_name, type_name);
+            fprintf(fp, "obj_%s_t* obj_%s_copy(const obj_%s_t* self);\n", type_name, type_name, type_name);
             fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other);\n", type_name, type_name, type_name);
             fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "obj_t* obj_%s_eval(const obj_%s_t* self, obj_env_t* env);\n", type_name, type_name);
@@ -191,10 +193,10 @@ int main(int argc, char** argv ) {
             fprintf(fp, "    obj_string_push_cstr(other, \">\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_t* obj_%s_copy(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "obj_%s_t* obj_%s_copy(const obj_%s_t* self) {\n", type_name, type_name, type_name);
             fprintf(fp, "    obj_%s_t* copy = obj_%s_new();\n", type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
-            fprintf(fp, "    return (obj_t*) copy;\n");
+            fprintf(fp, "    return copy;\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
             fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other) {\n", type_name, type_name, type_name);
@@ -220,6 +222,7 @@ int main(int argc, char** argv ) {
     fprintf(fp_universe_h, "typedef struct universe_t {\n");
     fprintf(fp_universe_h, "    int argc;\n");
     fprintf(fp_universe_h, "    char** argv;\n");
+    fprintf(fp_universe_h, "    struct backtrace_state* backtrace_state;\n");
     fprintf(fp_universe_h, "} universe_t;\n");
     fprintf(fp_universe_h, "\n");
     fprintf(fp_universe_h, "extern universe_t UNIVERSE;\n");
@@ -235,6 +238,7 @@ int main(int argc, char** argv ) {
     fprintf(fp_universe_c, "void universe_init(int argc, char** argv) {\n");
     fprintf(fp_universe_c, "    UNIVERSE.argc = argc;\n");
     fprintf(fp_universe_c, "    UNIVERSE.argv = argv;\n");
+    fprintf(fp_universe_c, "    UNIVERSE.backtrace_state = backtrace_create_state(argv[0], 0, NULL, NULL);\n");
     fprintf(fp_universe_c, "}\n");
     fprintf(fp_universe_c, "\n");
     fprintf(fp_universe_c, "void universe_deinit(void) {\n");
@@ -248,7 +252,6 @@ int main(int argc, char** argv ) {
 
     // todo: port these to obj types
     fprintf(fp_obj_h, "# include \"err.h\"\n");
-
 
     type_t* type_cur = type_head;
     while (type_cur) {
@@ -277,6 +280,7 @@ int main(int argc, char** argv ) {
     fprintf(fp_obj_h, "} obj_t;\n");
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h,  "void obj_init(obj_t* self, obj_type_t type);\n");
+    fprintf(fp_obj_h,  "void obj_delete(obj_t* self);\n");
     fprintf(fp_obj_h, "obj_type_t obj_get_type(const obj_t* self);\n");
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h, "void obj_to_string(const obj_t* self, obj_string_t* other);\n");
@@ -318,6 +322,26 @@ int main(int argc, char** argv ) {
         "\n"
         "void obj_init(obj_t* self, obj_type_t type) {\n"
         "    self->type = type;\n"
+        "}\n"
+        "\n"
+    );
+
+    fprintf(fp_obj_c,
+        "void obj_delete(obj_t* self) {\n"
+        "    switch (self->type) {\n"
+    );
+    type_cur = type_head;
+    while (type_cur) {
+        fprintf(fp_obj_c, "        case OBJ_TYPE_");
+        for (int i = 0; type_cur->name[i]; i++) {
+            fputc(toupper(type_cur->name[i]), fp_obj_c);
+        }
+        fprintf(fp_obj_c, ": obj_%s_delete((obj_%s_t*)self); break;\n", type_cur->name, type_cur->name);
+        type_cur = type_cur->next;
+    }
+    fprintf(fp_obj_c,
+        "        default: assert(0);\n"
+        "    }\n"
         "}\n"
         "\n"
         "obj_type_t obj_get_type(const obj_t* self) {\n"

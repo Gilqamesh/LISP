@@ -27,10 +27,10 @@ void obj_env_to_string(const obj_env_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_env_copy(const obj_env_t* self) {
+obj_env_t* obj_env_copy(const obj_env_t* self) {
     obj_env_t* copy = obj_env_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_env_equal(const obj_env_t* self, const obj_env_t* other) {
@@ -51,7 +51,7 @@ obj_t* obj_env_apply(const obj_env_t* self, obj_array_t* args, obj_env_t* env) {
 
 obj_t* obj_env_get(const obj_env_t* self, const obj_t* key) {
     while (self) {
-        obj_hash_table_entry_t* entry = obj_hash_table_find(self->hash_table, key);
+        hash_table_entry_t* entry = obj_hash_table_find(self->hash_table, key);
         if (entry) {
             return entry->value;
         }
@@ -61,7 +61,7 @@ obj_t* obj_env_get(const obj_env_t* self, const obj_t* key) {
 }
 
 obj_t* obj_env_set(obj_env_t* self, const obj_t* key, obj_t* value) {
-    obj_hash_table_entry_t* entry = obj_hash_table_find(self->hash_table, key);
+    hash_table_entry_t* entry = obj_hash_table_find(self->hash_table, key);
     if (!entry) {
         throw(obj_string_new_cstr("key not found"), key);
     }
@@ -70,6 +70,6 @@ obj_t* obj_env_set(obj_env_t* self, const obj_t* key, obj_t* value) {
 }
 
 obj_t* obj_env_define(obj_env_t* self, const obj_t* key, obj_t* value) {
-    obj_hash_table_insert_result_t insert_result = obj_hash_table_insert(self->hash_table, key, value);
+    hash_table_insert_result_t insert_result = obj_hash_table_insert(self->hash_table, key, value);
     return insert_result.entry->value;
 }

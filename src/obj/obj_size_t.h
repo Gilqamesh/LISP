@@ -14,7 +14,7 @@ void obj_size_t_delete(obj_size_t_t* self);
 bool is_size_t(const obj_t* self);
 obj_ffi_t* obj_size_t_to_ffi(const obj_size_t_t* self);
 void obj_size_t_to_string(const obj_size_t_t* self, obj_string_t* other);
-obj_t* obj_size_t_copy(const obj_size_t_t* self);
+obj_size_t_t* obj_size_t_copy(const obj_size_t_t* self);
 bool obj_size_t_equal(const obj_size_t_t* self, const obj_size_t_t* other);
 size_t obj_size_t_hash(const obj_size_t_t* self);
 obj_t* obj_size_t_eval(const obj_size_t_t* self, obj_env_t* env);

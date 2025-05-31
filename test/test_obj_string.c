@@ -1,4 +1,4 @@
-#include "obj_string.h"
+#include "universe.h"
 
 int main(int argc, char** argv) {
     universe_init(argc, argv);

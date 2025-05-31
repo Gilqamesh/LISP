@@ -26,10 +26,10 @@ void obj_short_to_string(const obj_short_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_short_copy(const obj_short_t* self) {
+obj_short_t* obj_short_copy(const obj_short_t* self) {
     obj_short_t* copy = obj_short_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_short_equal(const obj_short_t* self, const obj_short_t* other) {

@@ -25,9 +25,9 @@ void obj_size_t_to_string(const obj_size_t_t* self, obj_string_t* other) {
     obj_string_push_cstr(other, ">");
 }
 
-obj_t* obj_size_t_copy(const obj_size_t_t* self) {
+obj_size_t_t* obj_size_t_copy(const obj_size_t_t* self) {
     obj_size_t_t* copy = obj_size_t_new(self->value);
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_size_t_equal(const obj_size_t_t* self, const obj_size_t_t* other) {

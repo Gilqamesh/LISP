@@ -16,19 +16,19 @@ int main(int argc, char** argv) {
         obj_hash_table_insert(table, key2, 0);
         assert(obj_hash_table_size(table) == 2);
 
-        obj_hash_table_entry_t* entry = obj_hash_table_find(table, key1);
+        hash_table_entry_t* entry = obj_hash_table_find(table, key1);
         assert(entry);
         assert(entry->is_taken);
         assert(obj_equal(entry->key, key1));
 
-        obj_hash_table_entry_t* first = obj_hash_table_first(table);
+        hash_table_entry_t* first = obj_hash_table_first(table);
         while (first) {
             assert(first->is_taken);
             assert(obj_equal(entry->key, key1) || obj_equal(entry->key, key2));
             first = obj_hash_table_next(table, first);
         }
 
-        obj_hash_table_entry_t* last = obj_hash_table_last(table);
+        hash_table_entry_t* last = obj_hash_table_last(table);
         while (last) {
             assert(last->is_taken);
             assert(obj_equal(entry->key, key1) || obj_equal(entry->key, key2));
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
             bool insert = rand() % 2 == 0;
             if (insert) {
                 size_t index = rand() % size;
-                obj_hash_table_insert_result_t result = obj_hash_table_insert(table, keys[index], 0);
+                hash_table_insert_result_t result = obj_hash_table_insert(table, keys[index], 0);
                 if (result.is_new) {
                     ++expected_size;
                 }

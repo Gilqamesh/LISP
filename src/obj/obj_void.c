@@ -26,10 +26,10 @@ void obj_void_to_string(const obj_void_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_void_copy(const obj_void_t* self) {
+obj_void_t* obj_void_copy(const obj_void_t* self) {
     obj_void_t* copy = obj_void_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_void_equal(const obj_void_t* self, const obj_void_t* other) {

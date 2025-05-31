@@ -26,10 +26,10 @@ void obj_pointer_to_string(const obj_pointer_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_pointer_copy(const obj_pointer_t* self) {
+obj_pointer_t* obj_pointer_copy(const obj_pointer_t* self) {
     obj_pointer_t* copy = obj_pointer_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_pointer_equal(const obj_pointer_t* self, const obj_pointer_t* other) {

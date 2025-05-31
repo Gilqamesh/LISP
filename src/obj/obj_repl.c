@@ -26,10 +26,10 @@ void obj_repl_to_string(const obj_repl_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_repl_copy(const obj_repl_t* self) {
+obj_repl_t* obj_repl_copy(const obj_repl_t* self) {
     obj_repl_t* copy = obj_repl_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_repl_equal(const obj_repl_t* self, const obj_repl_t* other) {

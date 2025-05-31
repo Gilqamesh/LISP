@@ -14,7 +14,7 @@ void obj_list_delete(obj_list_t* self);
 bool is_list(const obj_t* self);
 obj_ffi_t* obj_list_to_ffi(const obj_list_t* self);
 void obj_list_to_string(const obj_list_t* self, obj_string_t* str);
-obj_t* obj_list_copy(const obj_list_t* self);
+obj_list_t* obj_list_copy(const obj_list_t* self);
 bool obj_list_equal(const obj_list_t* self, const obj_list_t* other);
 size_t obj_list_hash(const obj_list_t* self);
 obj_t* obj_list_eval(const obj_list_t* self, obj_env_t* env);

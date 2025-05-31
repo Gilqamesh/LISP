@@ -16,13 +16,15 @@ void obj_file_delete(obj_file_t* self);
 bool is_file(const obj_t* self);
 obj_ffi_t* obj_file_to_ffi(const obj_file_t* self);
 void obj_file_to_string(const obj_file_t* self, obj_string_t* str);
-obj_t* obj_file_copy(const obj_file_t* self);
+obj_file_t* obj_file_copy(const obj_file_t* self);
 bool obj_file_equal(const obj_file_t* self, const obj_file_t* other);
 size_t obj_file_hash(const obj_file_t* self);
 obj_t* obj_file_eval(const obj_file_t* self, obj_env_t* env);
 obj_t* obj_file_apply(const obj_file_t* self, obj_array_t* args, obj_env_t* env);
 
-obj_t* obj_file_read(const obj_file_t* self);
-obj_t* obj_file_write(const obj_file_t* self, const obj_t* obj);
+char obj_file_peek_char(const obj_file_t* self);
+char obj_file_read_char(const obj_file_t* self);
+void obj_file_unread_char(const obj_file_t* self, char c);
+bool obj_file_is_at_end(const obj_file_t* self);
 
 #endif // OBJ_FILE_H

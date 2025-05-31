@@ -30,6 +30,7 @@
 #include "obj_closure.h"
 #include "obj_primitive.h"
 #include "obj_repl.h"
+#include "obj_reader.h"
 
 const char* obj_type_to_string(obj_type_t type) {
     switch (type) {
@@ -63,12 +64,50 @@ const char* obj_type_to_string(obj_type_t type) {
         case OBJ_TYPE_CLOSURE: return "closure";
         case OBJ_TYPE_PRIMITIVE: return "primitive";
         case OBJ_TYPE_REPL: return "repl";
+        case OBJ_TYPE_READER: return "reader";
         default: assert(0);
     }
 }
 
 void obj_init(obj_t* self, obj_type_t type) {
     self->type = type;
+}
+
+void obj_delete(obj_t* self) {
+    switch (self->type) {
+        case OBJ_TYPE_LISP_TYPE: obj_lisp_type_delete((obj_lisp_type_t*)self); break;
+        case OBJ_TYPE_COMBINATION: obj_combination_delete((obj_combination_t*)self); break;
+        case OBJ_TYPE_ERROR: obj_error_delete((obj_error_t*)self); break;
+        case OBJ_TYPE_EOF: obj_eof_delete((obj_eof_t*)self); break;
+        case OBJ_TYPE_NIL: obj_nil_delete((obj_nil_t*)self); break;
+        case OBJ_TYPE_POINTER: obj_pointer_delete((obj_pointer_t*)self); break;
+        case OBJ_TYPE_BOOL: obj_bool_delete((obj_bool_t*)self); break;
+        case OBJ_TYPE_VOID: obj_void_delete((obj_void_t*)self); break;
+        case OBJ_TYPE_CHAR: obj_char_delete((obj_char_t*)self); break;
+        case OBJ_TYPE_UCHAR: obj_uchar_delete((obj_uchar_t*)self); break;
+        case OBJ_TYPE_INT: obj_int_delete((obj_int_t*)self); break;
+        case OBJ_TYPE_UINT: obj_uint_delete((obj_uint_t*)self); break;
+        case OBJ_TYPE_SHORT: obj_short_delete((obj_short_t*)self); break;
+        case OBJ_TYPE_USHORT: obj_ushort_delete((obj_ushort_t*)self); break;
+        case OBJ_TYPE_LONG: obj_long_delete((obj_long_t*)self); break;
+        case OBJ_TYPE_ULONG: obj_ulong_delete((obj_ulong_t*)self); break;
+        case OBJ_TYPE_SIZE_T: obj_size_t_delete((obj_size_t_t*)self); break;
+        case OBJ_TYPE_FLOAT: obj_float_delete((obj_float_t*)self); break;
+        case OBJ_TYPE_DOUBLE: obj_double_delete((obj_double_t*)self); break;
+        case OBJ_TYPE_SYMBOL: obj_symbol_delete((obj_symbol_t*)self); break;
+        case OBJ_TYPE_STRING: obj_string_delete((obj_string_t*)self); break;
+        case OBJ_TYPE_FILE: obj_file_delete((obj_file_t*)self); break;
+        case OBJ_TYPE_ENV: obj_env_delete((obj_env_t*)self); break;
+        case OBJ_TYPE_ARRAY: obj_array_delete((obj_array_t*)self); break;
+        case OBJ_TYPE_HASH_TABLE: obj_hash_table_delete((obj_hash_table_t*)self); break;
+        case OBJ_TYPE_FFI: obj_ffi_delete((obj_ffi_t*)self); break;
+        case OBJ_TYPE_MACRO: obj_macro_delete((obj_macro_t*)self); break;
+        case OBJ_TYPE_CLOSURE: obj_closure_delete((obj_closure_t*)self); break;
+        case OBJ_TYPE_PRIMITIVE: obj_primitive_delete((obj_primitive_t*)self); break;
+        case OBJ_TYPE_REPL: obj_repl_delete((obj_repl_t*)self); break;
+        case OBJ_TYPE_READER: obj_reader_delete((obj_reader_t*)self); break;
+        default: assert(0);
+    }
 }
 
 obj_type_t obj_get_type(const obj_t* self) {
@@ -107,6 +146,7 @@ void obj_to_string(const obj_t* self, obj_string_t* other) {
         case OBJ_TYPE_CLOSURE: obj_closure_to_string((obj_closure_t*)self, other); break;
         case OBJ_TYPE_PRIMITIVE: obj_primitive_to_string((obj_primitive_t*)self, other); break;
         case OBJ_TYPE_REPL: obj_repl_to_string((obj_repl_t*)self, other); break;
+        case OBJ_TYPE_READER: obj_reader_to_string((obj_reader_t*)self, other); break;
         default: assert(0);
     }
 }
@@ -143,6 +183,7 @@ obj_ffi_t* obj_to_ffi(const obj_t* self) {
         case OBJ_TYPE_CLOSURE: return obj_closure_to_ffi((obj_closure_t*)self);
         case OBJ_TYPE_PRIMITIVE: return obj_primitive_to_ffi((obj_primitive_t*)self);
         case OBJ_TYPE_REPL: return obj_repl_to_ffi((obj_repl_t*)self);
+        case OBJ_TYPE_READER: return obj_reader_to_ffi((obj_reader_t*)self);
         default: assert(0);
     }
 }
@@ -179,6 +220,7 @@ obj_t* obj_copy(const obj_t* self) {
         case OBJ_TYPE_CLOSURE: return (obj_t*) obj_closure_copy((obj_closure_t*)self);
         case OBJ_TYPE_PRIMITIVE: return (obj_t*) obj_primitive_copy((obj_primitive_t*)self);
         case OBJ_TYPE_REPL: return (obj_t*) obj_repl_copy((obj_repl_t*)self);
+        case OBJ_TYPE_READER: return (obj_t*) obj_reader_copy((obj_reader_t*)self);
         default: assert(0);
     }
 }
@@ -218,6 +260,7 @@ bool obj_equal(const obj_t* self, const obj_t* other) {
         case OBJ_TYPE_CLOSURE: return obj_closure_equal((obj_closure_t*)self, (obj_closure_t*)other);
         case OBJ_TYPE_PRIMITIVE: return obj_primitive_equal((obj_primitive_t*)self, (obj_primitive_t*)other);
         case OBJ_TYPE_REPL: return obj_repl_equal((obj_repl_t*)self, (obj_repl_t*)other);
+        case OBJ_TYPE_READER: return obj_reader_equal((obj_reader_t*)self, (obj_reader_t*)other);
         default: assert(0);
     }
 }
@@ -254,6 +297,7 @@ size_t obj_hash(const obj_t* self) {
         case OBJ_TYPE_CLOSURE: return obj_closure_hash((obj_closure_t*)self);
         case OBJ_TYPE_PRIMITIVE: return obj_primitive_hash((obj_primitive_t*)self);
         case OBJ_TYPE_REPL: return obj_repl_hash((obj_repl_t*)self);
+        case OBJ_TYPE_READER: return obj_reader_hash((obj_reader_t*)self);
         default: assert(0);
     }
 }
@@ -290,6 +334,7 @@ obj_t* obj_eval(const obj_t* self, obj_env_t* env) {
         case OBJ_TYPE_CLOSURE: return (obj_t*) obj_closure_eval((obj_closure_t*)self, env);
         case OBJ_TYPE_PRIMITIVE: return (obj_t*) obj_primitive_eval((obj_primitive_t*)self, env);
         case OBJ_TYPE_REPL: return (obj_t*) obj_repl_eval((obj_repl_t*)self, env);
+        case OBJ_TYPE_READER: return (obj_t*) obj_reader_eval((obj_reader_t*)self, env);
         default: assert(0);
     }
 }
@@ -326,6 +371,7 @@ obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_env_t* env) {
         case OBJ_TYPE_CLOSURE: return (obj_t*) obj_closure_apply((obj_closure_t*)self, args, env);
         case OBJ_TYPE_PRIMITIVE: return (obj_t*) obj_primitive_apply((obj_primitive_t*)self, args, env);
         case OBJ_TYPE_REPL: return (obj_t*) obj_repl_apply((obj_repl_t*)self, args, env);
+        case OBJ_TYPE_READER: return (obj_t*) obj_reader_apply((obj_reader_t*)self, args, env);
         default: assert(0);
     }
 }

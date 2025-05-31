@@ -26,10 +26,10 @@ void obj_closure_to_string(const obj_closure_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_closure_copy(const obj_closure_t* self) {
+obj_closure_t* obj_closure_copy(const obj_closure_t* self) {
     obj_closure_t* copy = obj_closure_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_closure_equal(const obj_closure_t* self, const obj_closure_t* other) {

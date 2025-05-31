@@ -26,10 +26,10 @@ void obj_bool_to_string(const obj_bool_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_bool_copy(const obj_bool_t* self) {
+obj_bool_t* obj_bool_copy(const obj_bool_t* self) {
     obj_bool_t* copy = obj_bool_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_bool_equal(const obj_bool_t* self, const obj_bool_t* other) {

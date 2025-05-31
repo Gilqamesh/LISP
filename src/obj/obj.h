@@ -34,6 +34,7 @@ typedef struct obj_macro_t obj_macro_t;
 typedef struct obj_closure_t obj_closure_t;
 typedef struct obj_primitive_t obj_primitive_t;
 typedef struct obj_repl_t obj_repl_t;
+typedef struct obj_reader_t obj_reader_t;
 
 typedef enum obj_type_t {
     OBJ_TYPE_LISP_TYPE,
@@ -66,6 +67,7 @@ typedef enum obj_type_t {
     OBJ_TYPE_CLOSURE,
     OBJ_TYPE_PRIMITIVE,
     OBJ_TYPE_REPL,
+    OBJ_TYPE_READER,
     _OBJ_TYPE_SIZE
 } obj_type_t;
 
@@ -76,6 +78,7 @@ typedef struct obj_t {
 } obj_t;
 
 void obj_init(obj_t* self, obj_type_t type);
+void obj_delete(obj_t* self);
 obj_type_t obj_get_type(const obj_t* self);
 
 void obj_to_string(const obj_t* self, obj_string_t* other);

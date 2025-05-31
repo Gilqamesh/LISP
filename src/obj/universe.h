@@ -1,6 +1,8 @@
 #ifndef UNIVERSE_H
 # define UNIVERSE_H
 
+# include <backtrace.h>
+
 # include "obj_lisp_type.h"
 # include "obj_combination.h"
 # include "obj_error.h"
@@ -31,10 +33,12 @@
 # include "obj_closure.h"
 # include "obj_primitive.h"
 # include "obj_repl.h"
+# include "obj_reader.h"
 
 typedef struct universe_t {
     int argc;
     char** argv;
+    struct backtrace_state* backtrace_state;
 } universe_t;
 
 extern universe_t UNIVERSE;

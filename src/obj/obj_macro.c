@@ -26,10 +26,10 @@ void obj_macro_to_string(const obj_macro_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_macro_copy(const obj_macro_t* self) {
+obj_macro_t* obj_macro_copy(const obj_macro_t* self) {
     obj_macro_t* copy = obj_macro_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_macro_equal(const obj_macro_t* self, const obj_macro_t* other) {

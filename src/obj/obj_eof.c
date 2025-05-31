@@ -26,10 +26,10 @@ void obj_eof_to_string(const obj_eof_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_eof_copy(const obj_eof_t* self) {
+obj_eof_t* obj_eof_copy(const obj_eof_t* self) {
     obj_eof_t* copy = obj_eof_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_eof_equal(const obj_eof_t* self, const obj_eof_t* other) {

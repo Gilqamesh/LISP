@@ -79,14 +79,24 @@ void obj_array_to_string(const obj_array_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_array_copy(const obj_array_t* self) {
+obj_array_t* obj_array_copy(const obj_array_t* self) {
     obj_array_t* copy = obj_array_new();
-    assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    for (size_t i = 0; i < self->objs_fill; ++i) {
+        obj_array_push(copy, obj_copy(self->objs[i]));
+    }
+    return copy;
 }
 
 bool obj_array_equal(const obj_array_t* self, const obj_array_t* other) {
-    assert(0 && "todo: implement");
+    if (self->objs_fill != other->objs_fill) {
+        return false;
+    }
+    for (size_t i = 0; i < self->objs_fill; ++i) {
+        if (!obj_equal(self->objs[i], other->objs[i])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 size_t obj_array_hash(const obj_array_t* self) {
@@ -120,6 +130,7 @@ void obj_array_push_array(obj_array_t* self, const obj_array_t* other) {
     }
     assert(desired_size <= self->objs_capacity);
     memcpy(self->objs + self->objs_fill, other->objs, other->objs_fill * sizeof(*self->objs));
+    self->objs_fill += other->objs_fill;
 }
 
 obj_t* obj_array_pop(obj_array_t* self) {
@@ -147,7 +158,7 @@ obj_t* obj_array_read(const obj_array_t* self, size_t index) {
 }
 
 obj_t* obj_array_write(obj_array_t* self, size_t index, obj_t* obj) {
-    if (self->objs_fill <= index) {
+    if (self->objs_fill < index) {
         throw(obj_string_new_cstr("index out of bounds"), self, obj, obj_size_t_new(index));
     }
     self->objs[index] = obj;

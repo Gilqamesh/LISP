@@ -26,10 +26,10 @@ void obj_ffi_to_string(const obj_ffi_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_ffi_copy(const obj_ffi_t* self) {
+obj_ffi_t* obj_ffi_copy(const obj_ffi_t* self) {
     obj_ffi_t* copy = obj_ffi_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_ffi_equal(const obj_ffi_t* self, const obj_ffi_t* other) {

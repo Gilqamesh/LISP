@@ -26,10 +26,10 @@ void obj_ulong_to_string(const obj_ulong_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_ulong_copy(const obj_ulong_t* self) {
+obj_ulong_t* obj_ulong_copy(const obj_ulong_t* self) {
     obj_ulong_t* copy = obj_ulong_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_ulong_equal(const obj_ulong_t* self, const obj_ulong_t* other) {

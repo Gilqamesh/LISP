@@ -26,9 +26,9 @@ void obj_int_to_string(const obj_int_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_int_copy(const obj_int_t* self) {
+obj_int_t* obj_int_copy(const obj_int_t* self) {
     obj_int_t* copy = obj_int_new(self->integer);
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_int_equal(const obj_int_t* self, const obj_int_t* other) {

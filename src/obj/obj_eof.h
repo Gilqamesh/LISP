@@ -13,7 +13,7 @@ void obj_eof_delete(obj_eof_t* self);
 bool is_eof(const obj_t* self);
 obj_ffi_t* obj_eof_to_ffi(const obj_eof_t* self);
 void obj_eof_to_string(const obj_eof_t* self, obj_string_t* str);
-obj_t* obj_eof_copy(const obj_eof_t* self);
+obj_eof_t* obj_eof_copy(const obj_eof_t* self);
 bool obj_eof_equal(const obj_eof_t* self, const obj_eof_t* other);
 size_t obj_eof_hash(const obj_eof_t* self);
 obj_t* obj_eof_eval(const obj_eof_t* self, obj_env_t* env);

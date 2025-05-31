@@ -26,10 +26,10 @@ void obj_nil_to_string(const obj_nil_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_nil_copy(const obj_nil_t* self) {
+obj_nil_t* obj_nil_copy(const obj_nil_t* self) {
     obj_nil_t* copy = obj_nil_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_nil_equal(const obj_nil_t* self, const obj_nil_t* other) {

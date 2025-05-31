@@ -11,7 +11,7 @@ static obj_hash_table_t obj_hash_table_new_internal(size_t entries_size) {
     obj_hash_table_t self;
     self.entries_fill = 0;
     self.entries_size = entries_size;
-    self.entries = (obj_hash_table_entry_t*) calloc(sizeof(*self.entries), entries_size);
+    self.entries = (hash_table_entry_t*) calloc(sizeof(*self.entries), entries_size);
     assert(self.entries != NULL);
     for (size_t i = 0; i < self.entries_size; ++i) {
         self.entries[i].index = i;
@@ -29,7 +29,7 @@ static double obj_hash_table_load_factor(const obj_hash_table_t* self) {
 static void obj_hash_table_change_size(obj_hash_table_t* self, size_t new_entries_size) {
     obj_hash_table_t new_table = obj_hash_table_new_internal(new_entries_size);
     for (size_t i = 0; i < self->entries_size; ++i) {
-        obj_hash_table_entry_t* entry = self->entries + i;
+        hash_table_entry_t* entry = self->entries + i;
         if (entry->is_taken) {
             obj_hash_table_insert(&new_table, entry->key, entry->value);
         }
@@ -82,10 +82,10 @@ void obj_hash_table_to_string(const obj_hash_table_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_hash_table_copy(const obj_hash_table_t* self) {
+obj_hash_table_t* obj_hash_table_copy(const obj_hash_table_t* self) {
     obj_hash_table_t* copy = obj_hash_table_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_hash_table_equal(const obj_hash_table_t* self, const obj_hash_table_t* other) {
@@ -104,14 +104,14 @@ obj_t* obj_hash_table_apply(const obj_hash_table_t* self, obj_array_t* args, obj
     assert(0 && "todo: implement");
 }
 
-obj_hash_table_insert_result_t obj_hash_table_insert(obj_hash_table_t* self, const obj_t* key, obj_t* value) {
+hash_table_insert_result_t obj_hash_table_insert(obj_hash_table_t* self, const obj_t* key, obj_t* value) {
     obj_hash_table_grow(self);
     size_t hash = obj_hash(key);
     size_t index = hash & (self->entries_size - 1);
     size_t probe_distance = 0;
-    obj_hash_table_insert_result_t result = { 0 };
+    hash_table_insert_result_t result = { 0 };
     while (true) {
-        obj_hash_table_entry_t* entry = self->entries + index;
+        hash_table_entry_t* entry = self->entries + index;
         if (entry->is_taken) {
             if (obj_equal(entry->key, key)) {
                 entry->value = value;
@@ -149,12 +149,12 @@ obj_hash_table_insert_result_t obj_hash_table_insert(obj_hash_table_t* self, con
     return result;
 }
 
-obj_hash_table_entry_t* obj_hash_table_find(const obj_hash_table_t* self, const obj_t* key) {
+hash_table_entry_t* obj_hash_table_find(const obj_hash_table_t* self, const obj_t* key) {
     size_t hash = obj_hash(key);
     size_t index = hash & (self->entries_size - 1);
     size_t probe_distance = 0;
     while (true) {
-        obj_hash_table_entry_t* entry = self->entries + index;
+        hash_table_entry_t* entry = self->entries + index;
         if (!entry->is_taken) {
             break ;
         }
@@ -174,7 +174,7 @@ obj_hash_table_entry_t* obj_hash_table_find(const obj_hash_table_t* self, const 
 }
 
 bool obj_hash_table_remove(obj_hash_table_t* self, const obj_t* key) {
-    obj_hash_table_entry_t* entry = obj_hash_table_find(self, key);
+    hash_table_entry_t* entry = obj_hash_table_find(self, key);
     if (entry) {
         --self->entries_fill;
         entry->is_taken = false;
@@ -183,7 +183,7 @@ bool obj_hash_table_remove(obj_hash_table_t* self, const obj_t* key) {
         entry->probe_distance = 0;
 
         size_t index = (entry->index + 1) & (self->entries_size - 1);
-        obj_hash_table_entry_t* prev_entry = entry;
+        hash_table_entry_t* prev_entry = entry;
         while (true) {
             entry = self->entries + index;
 
@@ -220,13 +220,13 @@ size_t obj_hash_table_size(const obj_hash_table_t* self) {
     return self->entries_fill;
 }
 
-obj_hash_table_entry_t* obj_hash_table_first(const obj_hash_table_t* self) {
+hash_table_entry_t* obj_hash_table_first(const obj_hash_table_t* self) {
     if (self->entries_size == 0) {
         return NULL;
     }
 
     for (size_t i = 0; i < self->entries_size; ++i) {
-        obj_hash_table_entry_t* entry = self->entries + i;
+        hash_table_entry_t* entry = self->entries + i;
         if (entry->is_taken) {
             return entry;
         }
@@ -235,19 +235,19 @@ obj_hash_table_entry_t* obj_hash_table_first(const obj_hash_table_t* self) {
     return NULL;
 }
 
-obj_hash_table_entry_t* obj_hash_table_last(const obj_hash_table_t* self) {
+hash_table_entry_t* obj_hash_table_last(const obj_hash_table_t* self) {
     if (self->entries_size == 0) {
         return NULL;
     }
 
     for (size_t i = self->entries_size - 1; 0 < i; --i) {
-        obj_hash_table_entry_t* entry = self->entries + i;
+        hash_table_entry_t* entry = self->entries + i;
         if (entry->is_taken) {
             return entry;
         }
     }
 
-    obj_hash_table_entry_t* entry = self->entries;
+    hash_table_entry_t* entry = self->entries;
     if (entry->is_taken) {
         return entry;
     }
@@ -255,7 +255,7 @@ obj_hash_table_entry_t* obj_hash_table_last(const obj_hash_table_t* self) {
     return NULL;
 }
 
-obj_hash_table_entry_t* obj_hash_table_next(const obj_hash_table_t* self, obj_hash_table_entry_t* entry) {
+hash_table_entry_t* obj_hash_table_next(const obj_hash_table_t* self, hash_table_entry_t* entry) {
     for (size_t i = entry->index + 1; i < self->entries_size; ++i) {
         entry = self->entries + i;
         if (entry->is_taken) {
@@ -266,7 +266,7 @@ obj_hash_table_entry_t* obj_hash_table_next(const obj_hash_table_t* self, obj_ha
     return NULL;
 }
 
-obj_hash_table_entry_t* obj_hash_table_prev(const obj_hash_table_t* self, obj_hash_table_entry_t* entry) {
+hash_table_entry_t* obj_hash_table_prev(const obj_hash_table_t* self, hash_table_entry_t* entry) {
     if (entry->index == 0) {
         return NULL;
     }

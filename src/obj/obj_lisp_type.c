@@ -26,10 +26,10 @@ void obj_lisp_type_to_string(const obj_lisp_type_t* self, obj_string_t* str) {
     obj_string_push_cstr(str, ">");
 }
 
-obj_t* obj_lisp_type_copy(const obj_lisp_type_t* self) {
+obj_lisp_type_t* obj_lisp_type_copy(const obj_lisp_type_t* self) {
     obj_lisp_type_t* copy = obj_lisp_type_new();
     assert(0 && "todo: implement");
-    return (obj_t*) copy;
+    return copy;
 }
 
 bool obj_lisp_type_equal(const obj_lisp_type_t* self, const obj_lisp_type_t* other) {
