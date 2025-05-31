@@ -3,9 +3,9 @@
 
 # include "libc.h"
 
-# include "hash_table.h"
 # include "err.h"
 typedef struct obj_lisp_type_t obj_lisp_type_t;
+typedef struct obj_combination_t obj_combination_t;
 typedef struct obj_error_t obj_error_t;
 typedef struct obj_eof_t obj_eof_t;
 typedef struct obj_nil_t obj_nil_t;
@@ -37,6 +37,7 @@ typedef struct obj_repl_t obj_repl_t;
 
 typedef enum obj_type_t {
     OBJ_TYPE_LISP_TYPE,
+    OBJ_TYPE_COMBINATION,
     OBJ_TYPE_ERROR,
     OBJ_TYPE_EOF,
     OBJ_TYPE_NIL,
@@ -82,7 +83,7 @@ obj_ffi_t* obj_to_ffi(const obj_t* self);
 obj_t* obj_copy(const obj_t* self);
 bool obj_equal(const obj_t* self, const obj_t* other);
 size_t obj_hash(const obj_t* self);
-obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env);
-obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_eval(const obj_t* self, obj_env_t* env);
+obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_H

@@ -16,7 +16,7 @@ void obj_long_to_string(const obj_long_t* self, obj_string_t* str);
 obj_t* obj_long_copy(const obj_long_t* self);
 bool obj_long_equal(const obj_long_t* self, const obj_long_t* other);
 size_t obj_long_hash(const obj_long_t* self);
-obj_t* obj_long_eval(const obj_long_t* self, obj_hash_table_t* env);
-obj_t* obj_long_apply(const obj_long_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_long_eval(const obj_long_t* self, obj_env_t* env);
+obj_t* obj_long_apply(const obj_long_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_LONG_H

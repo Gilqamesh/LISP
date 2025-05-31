@@ -16,7 +16,7 @@ void obj_ushort_to_string(const obj_ushort_t* self, obj_string_t* str);
 obj_t* obj_ushort_copy(const obj_ushort_t* self);
 bool obj_ushort_equal(const obj_ushort_t* self, const obj_ushort_t* other);
 size_t obj_ushort_hash(const obj_ushort_t* self);
-obj_t* obj_ushort_eval(const obj_ushort_t* self, obj_hash_table_t* env);
-obj_t* obj_ushort_apply(const obj_ushort_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_ushort_eval(const obj_ushort_t* self, obj_env_t* env);
+obj_t* obj_ushort_apply(const obj_ushort_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_USHORT_H

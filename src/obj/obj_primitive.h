@@ -16,7 +16,7 @@ void obj_primitive_to_string(const obj_primitive_t* self, obj_string_t* str);
 obj_t* obj_primitive_copy(const obj_primitive_t* self);
 bool obj_primitive_equal(const obj_primitive_t* self, const obj_primitive_t* other);
 size_t obj_primitive_hash(const obj_primitive_t* self);
-obj_t* obj_primitive_eval(const obj_primitive_t* self, obj_hash_table_t* env);
-obj_t* obj_primitive_apply(const obj_primitive_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_primitive_eval(const obj_primitive_t* self, obj_env_t* env);
+obj_t* obj_primitive_apply(const obj_primitive_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_PRIMITIVE_H

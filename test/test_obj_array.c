@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
 
     fn1();
 
-    universe_destroy();
+    universe_deinit();
 
     return 0;
 }

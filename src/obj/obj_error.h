@@ -19,7 +19,7 @@ void obj_error_to_string(const obj_error_t* self, obj_string_t* str);
 obj_t* obj_error_copy(const obj_error_t* self);
 bool obj_error_equal(const obj_error_t* self, const obj_error_t* other);
 size_t obj_error_hash(const obj_error_t* self);
-obj_t* obj_error_eval(const obj_error_t* self, obj_hash_table_t* env);
-obj_t* obj_error_apply(const obj_error_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_error_eval(const obj_error_t* self, obj_env_t* env);
+obj_t* obj_error_apply(const obj_error_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_ERROR_H

@@ -1,6 +1,7 @@
 #include "obj.h"
 
 #include "obj_lisp_type.h"
+#include "obj_combination.h"
 #include "obj_error.h"
 #include "obj_eof.h"
 #include "obj_nil.h"
@@ -33,6 +34,7 @@
 const char* obj_type_to_string(obj_type_t type) {
     switch (type) {
         case OBJ_TYPE_LISP_TYPE: return "lisp_type";
+        case OBJ_TYPE_COMBINATION: return "combination";
         case OBJ_TYPE_ERROR: return "error";
         case OBJ_TYPE_EOF: return "eof";
         case OBJ_TYPE_NIL: return "nil";
@@ -76,6 +78,7 @@ obj_type_t obj_get_type(const obj_t* self) {
 void obj_to_string(const obj_t* self, obj_string_t* other) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: obj_lisp_type_to_string((obj_lisp_type_t*)self, other); break;
+        case OBJ_TYPE_COMBINATION: obj_combination_to_string((obj_combination_t*)self, other); break;
         case OBJ_TYPE_ERROR: obj_error_to_string((obj_error_t*)self, other); break;
         case OBJ_TYPE_EOF: obj_eof_to_string((obj_eof_t*)self, other); break;
         case OBJ_TYPE_NIL: obj_nil_to_string((obj_nil_t*)self, other); break;
@@ -111,6 +114,7 @@ void obj_to_string(const obj_t* self, obj_string_t* other) {
 obj_ffi_t* obj_to_ffi(const obj_t* self) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return obj_lisp_type_to_ffi((obj_lisp_type_t*)self);
+        case OBJ_TYPE_COMBINATION: return obj_combination_to_ffi((obj_combination_t*)self);
         case OBJ_TYPE_ERROR: return obj_error_to_ffi((obj_error_t*)self);
         case OBJ_TYPE_EOF: return obj_eof_to_ffi((obj_eof_t*)self);
         case OBJ_TYPE_NIL: return obj_nil_to_ffi((obj_nil_t*)self);
@@ -146,6 +150,7 @@ obj_ffi_t* obj_to_ffi(const obj_t* self) {
 obj_t* obj_copy(const obj_t* self) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return (obj_t*) obj_lisp_type_copy((obj_lisp_type_t*)self);
+        case OBJ_TYPE_COMBINATION: return (obj_t*) obj_combination_copy((obj_combination_t*)self);
         case OBJ_TYPE_ERROR: return (obj_t*) obj_error_copy((obj_error_t*)self);
         case OBJ_TYPE_EOF: return (obj_t*) obj_eof_copy((obj_eof_t*)self);
         case OBJ_TYPE_NIL: return (obj_t*) obj_nil_copy((obj_nil_t*)self);
@@ -184,6 +189,7 @@ bool obj_equal(const obj_t* self, const obj_t* other) {
     }
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return obj_lisp_type_equal((obj_lisp_type_t*)self, (obj_lisp_type_t*)other);
+        case OBJ_TYPE_COMBINATION: return obj_combination_equal((obj_combination_t*)self, (obj_combination_t*)other);
         case OBJ_TYPE_ERROR: return obj_error_equal((obj_error_t*)self, (obj_error_t*)other);
         case OBJ_TYPE_EOF: return obj_eof_equal((obj_eof_t*)self, (obj_eof_t*)other);
         case OBJ_TYPE_NIL: return obj_nil_equal((obj_nil_t*)self, (obj_nil_t*)other);
@@ -219,6 +225,7 @@ bool obj_equal(const obj_t* self, const obj_t* other) {
 size_t obj_hash(const obj_t* self) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return obj_lisp_type_hash((obj_lisp_type_t*)self);
+        case OBJ_TYPE_COMBINATION: return obj_combination_hash((obj_combination_t*)self);
         case OBJ_TYPE_ERROR: return obj_error_hash((obj_error_t*)self);
         case OBJ_TYPE_EOF: return obj_eof_hash((obj_eof_t*)self);
         case OBJ_TYPE_NIL: return obj_nil_hash((obj_nil_t*)self);
@@ -251,9 +258,10 @@ size_t obj_hash(const obj_t* self) {
     }
 }
 
-obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env) {
+obj_t* obj_eval(const obj_t* self, obj_env_t* env) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return (obj_t*) obj_lisp_type_eval((obj_lisp_type_t*)self, env);
+        case OBJ_TYPE_COMBINATION: return (obj_t*) obj_combination_eval((obj_combination_t*)self, env);
         case OBJ_TYPE_ERROR: return (obj_t*) obj_error_eval((obj_error_t*)self, env);
         case OBJ_TYPE_EOF: return (obj_t*) obj_eof_eval((obj_eof_t*)self, env);
         case OBJ_TYPE_NIL: return (obj_t*) obj_nil_eval((obj_nil_t*)self, env);
@@ -286,9 +294,10 @@ obj_t* obj_eval(const obj_t* self, obj_hash_table_t* env) {
     }
 }
 
-obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_hash_table_t* env) {
+obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_env_t* env) {
     switch (self->type) {
         case OBJ_TYPE_LISP_TYPE: return (obj_t*) obj_lisp_type_apply((obj_lisp_type_t*)self, args, env);
+        case OBJ_TYPE_COMBINATION: return (obj_t*) obj_combination_apply((obj_combination_t*)self, args, env);
         case OBJ_TYPE_ERROR: return (obj_t*) obj_error_apply((obj_error_t*)self, args, env);
         case OBJ_TYPE_EOF: return (obj_t*) obj_eof_apply((obj_eof_t*)self, args, env);
         case OBJ_TYPE_NIL: return (obj_t*) obj_nil_apply((obj_nil_t*)self, args, env);

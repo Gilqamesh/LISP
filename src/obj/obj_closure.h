@@ -16,7 +16,7 @@ void obj_closure_to_string(const obj_closure_t* self, obj_string_t* str);
 obj_t* obj_closure_copy(const obj_closure_t* self);
 bool obj_closure_equal(const obj_closure_t* self, const obj_closure_t* other);
 size_t obj_closure_hash(const obj_closure_t* self);
-obj_t* obj_closure_eval(const obj_closure_t* self, obj_hash_table_t* env);
-obj_t* obj_closure_apply(const obj_closure_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_closure_eval(const obj_closure_t* self, obj_env_t* env);
+obj_t* obj_closure_apply(const obj_closure_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_CLOSURE_H

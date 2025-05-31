@@ -16,7 +16,7 @@ void obj_ulong_to_string(const obj_ulong_t* self, obj_string_t* str);
 obj_t* obj_ulong_copy(const obj_ulong_t* self);
 bool obj_ulong_equal(const obj_ulong_t* self, const obj_ulong_t* other);
 size_t obj_ulong_hash(const obj_ulong_t* self);
-obj_t* obj_ulong_eval(const obj_ulong_t* self, obj_hash_table_t* env);
-obj_t* obj_ulong_apply(const obj_ulong_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_ulong_eval(const obj_ulong_t* self, obj_env_t* env);
+obj_t* obj_ulong_apply(const obj_ulong_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_ULONG_H

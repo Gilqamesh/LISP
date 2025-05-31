@@ -22,8 +22,8 @@ void obj_string_to_string(const obj_string_t* self, obj_string_t* other);
 obj_string_t* obj_string_copy(const obj_string_t* self);
 bool obj_string_equal(const obj_string_t* self, const obj_string_t* other);
 size_t obj_string_hash(const obj_string_t* self);
-obj_t* obj_string_eval(const obj_string_t* self, obj_hash_table_t* env);
-obj_t* obj_string_apply(const obj_string_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_string_eval(const obj_string_t* self, obj_env_t* env);
+obj_t* obj_string_apply(const obj_string_t* self, obj_array_t* args, obj_env_t* env);
 
 void obj_string_push_cstr(obj_string_t* self, const char* format, ...);
 void obj_string_push_string(obj_string_t* self, const obj_string_t* other);

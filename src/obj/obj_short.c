@@ -40,10 +40,10 @@ size_t obj_short_hash(const obj_short_t* self) {
     assert(0 && "todo: implement");
 }
 
-obj_t* obj_short_eval(const obj_short_t* self, obj_hash_table_t* env) {
+obj_t* obj_short_eval(const obj_short_t* self, obj_env_t* env) {
     return (obj_t*) self;
 }
 
-obj_t* obj_short_apply(const obj_short_t* self, obj_array_t* args, obj_hash_table_t* env) {
+obj_t* obj_short_apply(const obj_short_t* self, obj_array_t* args, obj_env_t* env) {
     assert(0 && "todo: implement");
 }

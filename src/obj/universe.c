@@ -7,5 +7,5 @@ void universe_init(int argc, char** argv) {
     UNIVERSE.argv = argv;
 }
 
-void universe_destroy(void) {
+void universe_deinit(void) {
 }

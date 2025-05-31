@@ -2,6 +2,7 @@
 # define UNIVERSE_H
 
 # include "obj_lisp_type.h"
+# include "obj_combination.h"
 # include "obj_error.h"
 # include "obj_eof.h"
 # include "obj_nil.h"
@@ -38,6 +39,6 @@ typedef struct universe_t {
 
 extern universe_t UNIVERSE;
 void universe_init(int argc, char** argv);
-void universe_destroy(void);
+void universe_deinit(void);
 
 #endif // UNIVERSE_H

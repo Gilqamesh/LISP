@@ -16,7 +16,7 @@ void obj_bool_to_string(const obj_bool_t* self, obj_string_t* str);
 obj_t* obj_bool_copy(const obj_bool_t* self);
 bool obj_bool_equal(const obj_bool_t* self, const obj_bool_t* other);
 size_t obj_bool_hash(const obj_bool_t* self);
-obj_t* obj_bool_eval(const obj_bool_t* self, obj_hash_table_t* env);
-obj_t* obj_bool_apply(const obj_bool_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_bool_eval(const obj_bool_t* self, obj_env_t* env);
+obj_t* obj_bool_apply(const obj_bool_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_BOOL_H

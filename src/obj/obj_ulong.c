@@ -40,10 +40,10 @@ size_t obj_ulong_hash(const obj_ulong_t* self) {
     assert(0 && "todo: implement");
 }
 
-obj_t* obj_ulong_eval(const obj_ulong_t* self, obj_hash_table_t* env) {
+obj_t* obj_ulong_eval(const obj_ulong_t* self, obj_env_t* env) {
     return (obj_t*) self;
 }
 
-obj_t* obj_ulong_apply(const obj_ulong_t* self, obj_array_t* args, obj_hash_table_t* env) {
+obj_t* obj_ulong_apply(const obj_ulong_t* self, obj_array_t* args, obj_env_t* env) {
     assert(0 && "todo: implement");
 }

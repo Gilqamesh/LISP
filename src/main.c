@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
     universe_init(argc, argv);
 
-    obj_hash_table_t* env = obj_hash_table_new();
+    obj_env_t* env = obj_env_new();
     try {
         obj_repl_t* repl = obj_repl_new();
         obj_repl_eval(repl, env);
@@ -15,9 +15,9 @@ int main(int argc, char** argv) {
         printf("%s\n", obj_string_cstr(str));
         obj_string_delete(str);
     }
-    obj_hash_table_delete(env);
+    obj_env_delete(env);
 
-    universe_destroy();
+    universe_deinit();
 
     return 0;
 }

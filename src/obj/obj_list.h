@@ -17,8 +17,8 @@ void obj_list_to_string(const obj_list_t* self, obj_string_t* str);
 obj_t* obj_list_copy(const obj_list_t* self);
 bool obj_list_equal(const obj_list_t* self, const obj_list_t* other);
 size_t obj_list_hash(const obj_list_t* self);
-obj_t* obj_list_eval(const obj_list_t* self, obj_hash_table_t* env);
-obj_t* obj_list_apply(const obj_list_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_list_eval(const obj_list_t* self, obj_env_t* env);
+obj_t* obj_list_apply(const obj_list_t* self, obj_array_t* args, obj_env_t* env);
 
 obj_t* obj_list_push(obj_list_t* self, obj_t* obj);
 

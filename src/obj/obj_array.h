@@ -19,8 +19,8 @@ void obj_array_to_string(const obj_array_t* self, obj_string_t* str);
 obj_t* obj_array_copy(const obj_array_t* self);
 bool obj_array_equal(const obj_array_t* self, const obj_array_t* other);
 size_t obj_array_hash(const obj_array_t* self);
-obj_t* obj_array_eval(const obj_array_t* self, obj_hash_table_t* env);
-obj_t* obj_array_apply(const obj_array_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_array_eval(const obj_array_t* self, obj_env_t* env);
+obj_t* obj_array_apply(const obj_array_t* self, obj_array_t* args, obj_env_t* env);
 
 obj_t* obj_array_push(obj_array_t* self, obj_t* obj);
 void obj_array_push_array(obj_array_t* self, const obj_array_t* other);

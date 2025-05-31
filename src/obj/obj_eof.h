@@ -16,7 +16,7 @@ void obj_eof_to_string(const obj_eof_t* self, obj_string_t* str);
 obj_t* obj_eof_copy(const obj_eof_t* self);
 bool obj_eof_equal(const obj_eof_t* self, const obj_eof_t* other);
 size_t obj_eof_hash(const obj_eof_t* self);
-obj_t* obj_eof_eval(const obj_eof_t* self, obj_hash_table_t* env);
-obj_t* obj_eof_apply(const obj_eof_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_eof_eval(const obj_eof_t* self, obj_env_t* env);
+obj_t* obj_eof_apply(const obj_eof_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_EOF_H

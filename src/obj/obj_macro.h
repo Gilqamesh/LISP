@@ -16,7 +16,7 @@ void obj_macro_to_string(const obj_macro_t* self, obj_string_t* str);
 obj_t* obj_macro_copy(const obj_macro_t* self);
 bool obj_macro_equal(const obj_macro_t* self, const obj_macro_t* other);
 size_t obj_macro_hash(const obj_macro_t* self);
-obj_t* obj_macro_eval(const obj_macro_t* self, obj_hash_table_t* env);
-obj_t* obj_macro_apply(const obj_macro_t* self, obj_array_t* args, obj_hash_table_t* env);
+obj_t* obj_macro_eval(const obj_macro_t* self, obj_env_t* env);
+obj_t* obj_macro_apply(const obj_macro_t* self, obj_array_t* args, obj_env_t* env);
 
 #endif // OBJ_MACRO_H

@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         obj_string_delete(str);
     }
 
-    universe_destroy();
+    universe_deinit();
 
     return 0;
 }
