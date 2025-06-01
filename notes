@@ -1,0 +1,2 @@
+C-API:
+  - constructors always take ownership of arguments unless said otherwise (parameter prefixed with 'borrowed_')

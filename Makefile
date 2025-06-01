@@ -1,32 +1,66 @@
-pwd := $(shell pwd)
-tool-dir := $(pwd)/tools
-src-dir := $(pwd)/src
-generate-src := $(tool-dir)/generate-obj-types.c
-generate-bin := gen
-generate-bin-args := $(tool-dir)/obj-types.txt $(src-dir)/obj
-generate-inc := -g
-repl-src := $(shell find $(src-dir) -name '*.c')
-repl-lib := -lbacktrace
-repl-bin := repl
-repl-inc := -g -I$(src-dir) -I$(src-dir)/obj
+tool-dir := tools
+src-dir := src
+test-dir := tests
 
-.PHONY: all generate generate-debug clean
+src := $(shell find $(src-dir) -name '*.c')
+cflag := -g -I$(src-dir)
+cin := 
+lflag := -lbacktrace -lm
+cout := $(src:$(src-dir)/%.c=$(src-dir)/%.o)
 
-all: $(generate-bin)
-all: $(repl-bin)
+tool-src := $(shell find $(tool-dir) -name '*.c')
+tool-cflag := -I$(tool-dir)
+tool-cout := $(tool-src:$(tool-dir)/%.c=$(tool-dir)/%.o)
+tool-lin :=
+tool-lflag :=
+tool-lout := $(tool-src:$(tool-dir)/%.c=$(tool-dir)/%)
 
-$(generate-bin): $(generate-src)
-	$(CC) -o $@ $^ $(generate-inc)
+test-src := $(shell find $(test-dir) -name '*.c')
+test-cflag := $(cflag) -I$(test-dir)
+test-cout := $(test-src:$(test-dir)/%.c=$(test-dir)/%.o)
+test-lin := $(cout)
+test-lflag := $(lflag)
+test-lout := $(test-src:$(test-dir)/%.c=$(test-dir)/%)
 
-$(repl-bin): $(repl-src)
-	$(CC) -o $@ $^ $(repl-inc) $(repl-lib)
+.PHONY: all clean \
+		tools \
+		tests tests-run
 
-generate: $(generate-bin)
-	./$(generate-bin) $(generate-bin-args)
+all: tools
+all: tests
 
-generate-debug: $(generate-bin)
-	gdb --args ./$(generate-bin) $(generate-bin-args)
+$(src-dir)/%.o: $(src-dir)/%.c
+	$(CC) -c $< $(cflag) -MMD -MP -MF $(<:.c=.d) -o $@
+
+$(tool-dir)/%.o: $(tool-dir)/%.c
+	$(CC) -c $< $(tool-cflag) -MMD -MP -MF $(<:.c=.d) -o $@
+
+$(tool-dir)/%: $(tool-lin) $(tool-dir)/%.o
+	$(CC) $^ $(tool-lflag) -o $@
+
+$(test-dir)/%.o: $(test-dir)/%.c 
+	$(CC) -c $< $(test-cflag) -MMD -MP -MF $(<:.c=.d) -o $@
+
+$(test-dir)/%: $(test-lin) $(test-dir)/%.o
+	$(CC) $^ $(test-lflag) -o $@
+
+tools: $(tool-lout)
+
+tests: $(test-lout)
+
+tests-run: tests
+	for test in $(test-lout); do \
+		echo "Running $$test"; \
+		$$test; \
+		if [ $$? -ne 0 ]; then \
+			echo "Test $$test failed"; \
+			exit 1; \
+		fi; \
+	done
 
 clean:
-	rm -f $(generate-bin)
-	rm -f $(repl-bin)
+	rm -f $(cout) $(src:%.c=%.d)
+	rm -f $(tool-lout) $(tool-cout) $(tool-src:%.c=%.d)
+	rm -f $(test-lout) $(test-cout) $(test-src:%.c=%.d)
+
+-include $(src:%.c=%.d) $(tool-src:%.c=%.d) $(test-src:%.c=%.d)

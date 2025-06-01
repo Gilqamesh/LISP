@@ -40,7 +40,6 @@ void exit_clean(const char* format, ...) {
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
-    fprintf(stderr, "\n");
 
     exit(0);
 }
@@ -91,8 +90,6 @@ int main(int argc, char** argv ) {
 
     fprintf(fp_universe_h, "#ifndef UNIVERSE_H\n");
     fprintf(fp_universe_h, "# define UNIVERSE_H\n");
-    fprintf(fp_universe_h, "\n");
-    fprintf(fp_universe_h, "# include <backtrace.h>\n");
     fprintf(fp_universe_h, "\n");
 
     type_t* type_head = NULL;
@@ -152,9 +149,10 @@ int main(int argc, char** argv ) {
             fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other);\n", type_name, type_name);
             fprintf(fp, "obj_%s_t* obj_%s_copy(const obj_%s_t* self);\n", type_name, type_name, type_name);
             fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other);\n", type_name, type_name, type_name);
+            fprintf(fp, "bool obj_%s_is_truthy(const obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self);\n", type_name, type_name);
             fprintf(fp, "obj_t* obj_%s_eval(const obj_%s_t* self, obj_env_t* env);\n", type_name, type_name);
-            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_array_t* args, obj_env_t* env);\n", type_name, type_name);
+            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_t* args, obj_env_t* env);\n", type_name, type_name);
             fprintf(fp, "\n");
             fprintf(fp, "#endif // OBJ_%s_H\n", type_name_upper);
             fclose(fp);
@@ -188,7 +186,7 @@ int main(int argc, char** argv ) {
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
             fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other) {\n", type_name, type_name);
-            fprintf(fp, "    obj_string_push_cstr(other, \"<%s \", obj_type_to_string(obj_get_type((obj_t*) self)));\n", type_name);
+            fprintf(fp, "    obj_string_push_cstr(other, \"<%%s \", obj_type_to_string(obj_get_type((obj_t*) self)));\n");
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "    obj_string_push_cstr(other, \">\");\n");
             fprintf(fp, "}\n");
@@ -202,6 +200,9 @@ int main(int argc, char** argv ) {
             fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other) {\n", type_name, type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
+            fprintf(fp, "bool obj_%s_is_truthy(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "    assert(0 && \"todo: implement\");\n");
+            fprintf(fp, "}\n");
             fprintf(fp, "\n");
             fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self) {\n", type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
@@ -211,8 +212,8 @@ int main(int argc, char** argv ) {
             fprintf(fp, "    return (obj_t*) self;\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_array_t* args, obj_env_t* env) {\n", type_name, type_name);
-            fprintf(fp, "    assert(0 && \"todo: implement\");\n");
+            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_t* args, obj_env_t* env) {\n", type_name, type_name);
+            fprintf(fp, "    throw(obj_string_new_cstr(\"cannot apply %%s\", obj_type_to_string(obj_get_type((obj_t*) self))), (obj_t*) self);\n");
             fprintf(fp, "}\n");
             fclose(fp);
         }
@@ -248,10 +249,10 @@ int main(int argc, char** argv ) {
     fprintf(fp_obj_h, "# define OBJ_H\n");
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h, "# include \"libc.h\"\n");
-    fprintf(fp_obj_h, "\n");
-
     // todo: port these to obj types
     fprintf(fp_obj_h, "# include \"err.h\"\n");
+    fprintf(fp_obj_h, "# include \"utils.h\"\n");
+    fprintf(fp_obj_h, "\n");
 
     type_t* type_cur = type_head;
     while (type_cur) {
@@ -287,9 +288,11 @@ int main(int argc, char** argv ) {
     fprintf(fp_obj_h, "obj_ffi_t* obj_to_ffi(const obj_t* self);\n");
     fprintf(fp_obj_h, "obj_t* obj_copy(const obj_t* self);\n");
     fprintf(fp_obj_h, "bool obj_equal(const obj_t* self, const obj_t* other);\n");
+    fprintf(fp_obj_h, "bool obj_is_truthy(const obj_t* self);\n");
+    fprintf(fp_obj_h, "bool obj_is_eq(const obj_t* self, const obj_t* other);\n");
     fprintf(fp_obj_h, "size_t obj_hash(const obj_t* self);\n");
     fprintf(fp_obj_h, "obj_t* obj_eval(const obj_t* self, obj_env_t* env);\n");
-    fprintf(fp_obj_h, "obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_env_t* env);\n");
+    fprintf(fp_obj_h, "obj_t* obj_apply(const obj_t* self, obj_t* args, obj_env_t* env);\n");
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h, "#endif // OBJ_H\n");
 
@@ -419,6 +422,30 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
+        "bool obj_is_truthy(const obj_t* self) {\n"
+        "    switch (self->type) {\n"
+    );
+    type_cur = type_head;
+    while (type_cur) {
+        fprintf(fp_obj_c, "        case OBJ_TYPE_");
+        for (int i = 0; type_cur->name[i]; i++) {
+            fputc(toupper(type_cur->name[i]), fp_obj_c);
+        }
+        fprintf(fp_obj_c, ": return obj_%s_is_truthy((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        type_cur = type_cur->next;
+    }
+
+    fprintf(fp_obj_c,
+        "        default: assert(0);\n"
+        "    }\n"
+        "}\n"
+        "\n"
+    );
+    fprintf(fp_obj_c,
+        "bool obj_is_eq(const obj_t* self, const obj_t* other) {\n"
+        "    return self == other;\n"
+        "}\n"
+        "\n"
         "size_t obj_hash(const obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
@@ -453,7 +480,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_t* obj_apply(const obj_t* self, obj_array_t* args, obj_env_t* env) {\n"
+        "obj_t* obj_apply(const obj_t* self, obj_t* args, obj_env_t* env) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
