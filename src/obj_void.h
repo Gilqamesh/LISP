@@ -7,17 +7,18 @@ typedef struct obj_void_t {
     obj_t base;
 } obj_void_t;
 
-obj_void_t* obj_void_new();
-void obj_void_delete(obj_void_t* self);
+obj_t* obj_void_new();
+void obj_void_delete(obj_t* self);
 
-bool is_void(const obj_t* self);
-obj_ffi_t* obj_void_to_ffi(const obj_void_t* self);
-void obj_void_to_string(const obj_void_t* self, obj_string_t* str);
-obj_void_t* obj_void_copy(const obj_void_t* self);
-bool obj_void_equal(const obj_void_t* self, const obj_void_t* other);
-bool obj_void_is_truthy(const obj_void_t* self);
-size_t obj_void_hash(const obj_void_t* self);
-obj_t* obj_void_eval(const obj_void_t* self, obj_env_t* env);
-obj_t* obj_void_apply(const obj_void_t* self, obj_t* args, obj_env_t* env);
+bool is_void(obj_t* self);
+obj_void_t* obj_as_void(obj_t* self);
+ffi_type* obj_void_to_ffi(obj_t* self);
+void obj_void_to_string(obj_t* self, obj_t* string);
+obj_t* obj_void_copy(obj_t* self);
+bool obj_void_is_equal(obj_t* self, obj_t* other);
+bool obj_void_is_truthy(obj_t* self);
+size_t obj_void_hash(obj_t* self);
+obj_t* obj_void_eval(obj_t* self, obj_t* env);
+obj_t* obj_void_apply(obj_t* self, obj_t* args, obj_t* env);
 
 #endif // OBJ_VOID_H

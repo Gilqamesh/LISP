@@ -141,18 +141,19 @@ int main(int argc, char** argv ) {
             fprintf(fp, "    obj_t base;\n");
             fprintf(fp, "};\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_%s_t* obj_%s_new();\n", type_name, type_name);
-            fprintf(fp, "void obj_%s_delete(obj_%s_t* self);\n", type_name, type_name);
+            fprintf(fp, "obj_t* obj_%s_new();\n", type_name);
+            fprintf(fp, "void obj_%s_delete(obj_t* self);\n", type_name);
             fprintf(fp, "\n");
-            fprintf(fp, "bool is_%s(const obj_t* self);\n", type_name);
-            fprintf(fp, "obj_ffi_t* obj_%s_to_ffi(const obj_%s_t* self);\n", type_name, type_name);
-            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other);\n", type_name, type_name);
-            fprintf(fp, "obj_%s_t* obj_%s_copy(const obj_%s_t* self);\n", type_name, type_name, type_name);
-            fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other);\n", type_name, type_name, type_name);
-            fprintf(fp, "bool obj_%s_is_truthy(const obj_%s_t* self);\n", type_name, type_name);
-            fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self);\n", type_name, type_name);
-            fprintf(fp, "obj_t* obj_%s_eval(const obj_%s_t* self, obj_env_t* env);\n", type_name, type_name);
-            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_t* args, obj_env_t* env);\n", type_name, type_name);
+            fprintf(fp, "bool is_%s(obj_t* self);\n", type_name);
+            fprintf(fp, "obj_%s_t* obj_as_%s(obj_t* self);", type_name, type_name);
+            fprintf(fp, "ffi_type* obj_%s_to_ffi(obj_t* self);\n", type_name);
+            fprintf(fp, "obj_t* obj_%s_to_string(obj_t* self, obj_t* string);\n", type_name);
+            fprintf(fp, "obj_t* obj_%s_copy(obj_t* self);\n", type_name);
+            fprintf(fp, "bool obj_%s_is_equal(obj_t* self, obj_t* other);\n", type_name);
+            fprintf(fp, "bool obj_%s_is_truthy(obj_t* self);\n", type_name);
+            fprintf(fp, "size_t obj_%s_hash(obj_t* self);\n", type_name);
+            fprintf(fp, "obj_t* obj_%s_eval(obj_t* self, obj_t* env);\n", type_name);
+            fprintf(fp, "obj_t* obj_%s_apply(obj_t* self, obj_t* args, obj_t* env);\n", type_name);
             fprintf(fp, "\n");
             fprintf(fp, "#endif // OBJ_%s_H\n", type_name_upper);
             fclose(fp);
@@ -165,55 +166,72 @@ int main(int argc, char** argv ) {
             }
             fprintf(fp, "#include \"%s\"\n", obj_universe_h_base);
             fprintf(fp, "\n");
-            fprintf(fp, "obj_%s_t* obj_%s_new() {\n", type_name, type_name);
+            fprintf(fp, "obj_t* obj_%s_new() {\n", type_name);
             fprintf(fp, "    obj_%s_t* self = (obj_%s_t*) malloc(sizeof(obj_%s_t));\n", type_name, type_name, type_name);
             fprintf(fp, "    obj_init((obj_t*) self, OBJ_TYPE_%s);\n", type_name_upper);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
-            fprintf(fp, "    return self;\n");
+            fprintf(fp, "    return (obj_t*) self;\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "void obj_%s_delete(obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "void obj_%s_delete(obj_t* self) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
             fprintf(fp, "    free(self);\n");
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "bool is_%s(const obj_t* self) {\n", type_name);
-            fprintf(fp, "    return self->type == OBJ_TYPE_%s;\n", type_name_upper);
+            fprintf(fp, "bool is_%s(obj_t* self) {\n", type_name);
+            fprintf(fp, "    return obj_get_type(self) == OBJ_TYPE_%s;\n", type_name_upper);
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_ffi_t* obj_%s_to_ffi(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "obj_%s_t* obj_as_%s(obj_t* self) {\n", type_name, type_name);
+            fprintf(fp, "    if (!is_%s(self)) {\n", type_name);
+            fprintf(fp, "        throw(obj_string_new_cstr(\"expected %%s, got %%s\", \"obj_%s\", obj_type_to_string(obj_get_type(self))), self);\n", type_name);
+            fprintf(fp, "    }\n");
+            fprintf(fp, "    return (obj_%s_t*) self;\n", type_name);
+            fprintf(fp, "}\n");
+            fprintf(fp, "\n");
+            fprintf(fp, "ffi_type* obj_%s_to_ffi(obj_t* self) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "void obj_%s_to_string(const obj_%s_t* self, obj_string_t* other) {\n", type_name, type_name);
-            fprintf(fp, "    obj_string_push_cstr(other, \"<%%s \", obj_type_to_string(obj_get_type((obj_t*) self)));\n");
+            fprintf(fp, "void obj_%s_to_string(obj_t* self, obj_t* string) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
+            fprintf(fp, "    obj_string_push_cstr(string, \"<%%s \", obj_type_to_string(obj_get_type(self)));\n");
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
-            fprintf(fp, "    obj_string_push_cstr(other, \">\");\n");
+            fprintf(fp, "    obj_string_push_cstr(string, \">\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_%s_t* obj_%s_copy(const obj_%s_t* self) {\n", type_name, type_name, type_name);
-            fprintf(fp, "    obj_%s_t* copy = obj_%s_new();\n", type_name, type_name);
+            fprintf(fp, "obj_t* obj_%s_copy(obj_t* self) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
+            fprintf(fp, "    obj_t* copy = obj_%s_new();\n", type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "    return copy;\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "bool obj_%s_equal(const obj_%s_t* self, const obj_%s_t* other) {\n", type_name, type_name, type_name);
+            fprintf(fp, "bool obj_%s_is_equal(obj_t* self, obj_t* other) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s_self = obj_as_%s(self);\n", type_name, type_name, type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s_other = obj_as_%s(other);\n", type_name, type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
-            fprintf(fp, "bool obj_%s_is_truthy(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "bool obj_%s_is_truthy(obj_t* self) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "size_t obj_%s_hash(const obj_%s_t* self) {\n", type_name, type_name);
+            fprintf(fp, "size_t obj_%s_hash(obj_t* self) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
             fprintf(fp, "    assert(0 && \"todo: implement\");\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_t* obj_%s_eval(const obj_%s_t* self, obj_env_t* env) {\n", type_name, type_name);
-            fprintf(fp, "    return (obj_t*) self;\n");
+            fprintf(fp, "obj_t* obj_%s_eval(obj_t* self, obj_t* env) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
+            fprintf(fp, "    return self;\n");
             fprintf(fp, "}\n");
             fprintf(fp, "\n");
-            fprintf(fp, "obj_t* obj_%s_apply(const obj_%s_t* self, obj_t* args, obj_env_t* env) {\n", type_name, type_name);
-            fprintf(fp, "    throw(obj_string_new_cstr(\"cannot apply %%s\", obj_type_to_string(obj_get_type((obj_t*) self))), (obj_t*) self);\n");
+            fprintf(fp, "obj_t* obj_%s_apply(obj_t* self, obj_t* args, obj_t* env) {\n", type_name);
+            fprintf(fp, "    obj_%s_t* obj_%s = obj_as_%s(self);\n", type_name, type_name, type_name);
+            fprintf(fp, "    throw(obj_string_new_cstr(\"cannot apply %%s\", obj_type_to_string(obj_get_type(self))), self);\n");
             fprintf(fp, "}\n");
             fclose(fp);
         }
@@ -282,17 +300,17 @@ int main(int argc, char** argv ) {
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h,  "void obj_init(obj_t* self, obj_type_t type);\n");
     fprintf(fp_obj_h,  "void obj_delete(obj_t* self);\n");
-    fprintf(fp_obj_h, "obj_type_t obj_get_type(const obj_t* self);\n");
+    fprintf(fp_obj_h, "obj_type_t obj_get_type(obj_t* self);\n");
     fprintf(fp_obj_h, "\n");
-    fprintf(fp_obj_h, "void obj_to_string(const obj_t* self, obj_string_t* other);\n");
-    fprintf(fp_obj_h, "obj_ffi_t* obj_to_ffi(const obj_t* self);\n");
-    fprintf(fp_obj_h, "obj_t* obj_copy(const obj_t* self);\n");
-    fprintf(fp_obj_h, "bool obj_equal(const obj_t* self, const obj_t* other);\n");
-    fprintf(fp_obj_h, "bool obj_is_truthy(const obj_t* self);\n");
-    fprintf(fp_obj_h, "bool obj_is_eq(const obj_t* self, const obj_t* other);\n");
-    fprintf(fp_obj_h, "size_t obj_hash(const obj_t* self);\n");
-    fprintf(fp_obj_h, "obj_t* obj_eval(const obj_t* self, obj_env_t* env);\n");
-    fprintf(fp_obj_h, "obj_t* obj_apply(const obj_t* self, obj_t* args, obj_env_t* env);\n");
+    fprintf(fp_obj_h, "void obj_to_string(obj_t* self, obj_t* string);\n");
+    fprintf(fp_obj_h, "ffi_type* obj_to_ffi(obj_t* self);\n");
+    fprintf(fp_obj_h, "obj_t* obj_copy(obj_t* self);\n");
+    fprintf(fp_obj_h, "bool obj_is_equal(obj_t* self, obj_t* other);\n");
+    fprintf(fp_obj_h, "bool obj_is_truthy(obj_t* self);\n");
+    fprintf(fp_obj_h, "bool obj_is_eq(obj_t* self, obj_t* other);\n");
+    fprintf(fp_obj_h, "size_t obj_hash(obj_t* self);\n");
+    fprintf(fp_obj_h, "obj_t* obj_eval(obj_t* self, obj_t* env);\n");
+    fprintf(fp_obj_h, "obj_t* obj_apply(obj_t* self, obj_t* args, obj_t* env);\n");
     fprintf(fp_obj_h, "\n");
     fprintf(fp_obj_h, "#endif // OBJ_H\n");
 
@@ -339,7 +357,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": obj_%s_delete((obj_%s_t*)self); break;\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": obj_%s_delete(self); break;\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -347,11 +365,11 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_type_t obj_get_type(const obj_t* self) {\n"
+        "obj_type_t obj_get_type(obj_t* self) {\n"
         "    return self->type;\n"
         "}\n"
         "\n"
-        "void obj_to_string(const obj_t* self, obj_string_t* other) {\n"
+        "void obj_to_string(obj_t* self, obj_t* string) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -360,7 +378,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": obj_%s_to_string((obj_%s_t*)self, other); break;\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": obj_%s_to_string(self, string); break;\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -368,7 +386,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_ffi_t* obj_to_ffi(const obj_t* self) {\n"
+        "ffi_type* obj_to_ffi(obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -377,7 +395,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_to_ffi((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_to_ffi(self);\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -385,7 +403,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_t* obj_copy(const obj_t* self) {\n"
+        "obj_t* obj_copy(obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -394,7 +412,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_copy((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_copy(self);\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -402,7 +420,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "bool obj_equal(const obj_t* self, const obj_t* other) {\n"
+        "bool obj_is_equal(obj_t* self, obj_t* other) {\n"
         "    if (self->type != other->type) {\n"
         "        return false;\n"
         "    }\n"
@@ -414,7 +432,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_equal((obj_%s_t*)self, (obj_%s_t*)other);\n", type_cur->name, type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_is_equal(self, other);\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -422,7 +440,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "bool obj_is_truthy(const obj_t* self) {\n"
+        "bool obj_is_truthy(obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -431,7 +449,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_is_truthy((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_is_truthy(self);\n", type_cur->name);
         type_cur = type_cur->next;
     }
 
@@ -440,13 +458,11 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-    );
-    fprintf(fp_obj_c,
-        "bool obj_is_eq(const obj_t* self, const obj_t* other) {\n"
+        "bool obj_is_eq(obj_t* self, obj_t* other) {\n"
         "    return self == other;\n"
         "}\n"
         "\n"
-        "size_t obj_hash(const obj_t* self) {\n"
+        "size_t obj_hash(obj_t* self) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -455,7 +471,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return obj_%s_hash((obj_%s_t*)self);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_hash(self);\n", type_cur->name, type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -463,7 +479,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_t* obj_eval(const obj_t* self, obj_env_t* env) {\n"
+        "obj_t* obj_eval(obj_t* self, obj_t* env) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -472,7 +488,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_eval((obj_%s_t*)self, env);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_eval(self, env);\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,
@@ -480,7 +496,7 @@ int main(int argc, char** argv ) {
         "    }\n"
         "}\n"
         "\n"
-        "obj_t* obj_apply(const obj_t* self, obj_t* args, obj_env_t* env) {\n"
+        "obj_t* obj_apply(obj_t* self, obj_t* args, obj_t* env) {\n"
         "    switch (self->type) {\n"
     );
     type_cur = type_head;
@@ -489,7 +505,7 @@ int main(int argc, char** argv ) {
         for (int i = 0; type_cur->name[i]; i++) {
             fputc(toupper(type_cur->name[i]), fp_obj_c);
         }
-        fprintf(fp_obj_c, ": return (obj_t*) obj_%s_apply((obj_%s_t*)self, args, env);\n", type_cur->name, type_cur->name);
+        fprintf(fp_obj_c, ": return obj_%s_apply(self, args, env);\n", type_cur->name);
         type_cur = type_cur->next;
     }
     fprintf(fp_obj_c,

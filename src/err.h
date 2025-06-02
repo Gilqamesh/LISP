@@ -5,10 +5,10 @@
 
 typedef struct stack_frame_t {
     jmp_buf env;
-    const void* context;
+    void* context;
 } stack_frame_t;
 
-void err_throw(const void* context);
+void err_throw(void* context);
 
 stack_frame_t* err_begin_try();
 void err_end_try();
@@ -16,6 +16,6 @@ void err_end_try();
 #define try if (!setjmp(err_begin_try()->env)) {
 #define catch err_end_try(); } else
 
-const void* err_catch_context();
+void* err_catch_context();
 
 #endif // ERR_H

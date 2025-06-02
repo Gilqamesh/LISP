@@ -1,2 +1,3 @@
 C-API:
   - constructors always take ownership of arguments unless said otherwise (parameter prefixed with 'borrowed_')
+  - public API always works with either obj_t* or C type (other than derived obj_t to allow easier C-integration), its the responsibility of the callee to type check

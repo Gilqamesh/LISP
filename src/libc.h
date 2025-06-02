@@ -20,5 +20,6 @@
 
 // 3rd party
 # include <backtrace.h>
+# include <ffi.h>
 
 # endif // LIBC_H

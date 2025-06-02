@@ -5,20 +5,21 @@
 
 typedef struct obj_symbol_t {
     obj_t base;
-    obj_string_t* symbol;
+    obj_t* symbol;
 } obj_symbol_t;
 
-obj_symbol_t* obj_symbol_new(obj_string_t* symbol);
-void obj_symbol_delete(obj_symbol_t* self);
+obj_t* obj_symbol_new(obj_t* symbol);
+void obj_symbol_delete(obj_t* self);
 
-bool is_symbol(const obj_t* self);
-obj_ffi_t* obj_symbol_to_ffi(const obj_symbol_t* self);
-void obj_symbol_to_string(const obj_symbol_t* self, obj_string_t* str);
-obj_symbol_t* obj_symbol_copy(const obj_symbol_t* self);
-bool obj_symbol_equal(const obj_symbol_t* self, const obj_symbol_t* other);
-bool obj_symbol_is_truthy(const obj_symbol_t* self);
-size_t obj_symbol_hash(const obj_symbol_t* self);
-obj_t* obj_symbol_eval(const obj_symbol_t* self, obj_env_t* env);
-obj_t* obj_symbol_apply(const obj_symbol_t* self, obj_t* args, obj_env_t* env);
+bool is_symbol(obj_t* self);
+obj_symbol_t* obj_as_symbol(obj_t* self);
+ffi_type* obj_symbol_to_ffi(obj_t* self);
+void obj_symbol_to_string(obj_t* self, obj_t* string);
+obj_t* obj_symbol_copy(obj_t* self);
+bool obj_symbol_is_equal(obj_t* self, obj_t* other);
+bool obj_symbol_is_truthy(obj_t* self);
+size_t obj_symbol_hash(obj_t* self);
+obj_t* obj_symbol_eval(obj_t* self, obj_t* env);
+obj_t* obj_symbol_apply(obj_t* self, obj_t* args, obj_t* env);
 
 #endif // OBJ_SYMBOL_H

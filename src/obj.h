@@ -2,6 +2,7 @@
 # define OBJ_H
 
 # include "libc.h"
+
 # include "err.h"
 # include "utils.h"
 
@@ -13,15 +14,7 @@ typedef struct obj_nil_t obj_nil_t;
 typedef struct obj_pointer_t obj_pointer_t;
 typedef struct obj_bool_t obj_bool_t;
 typedef struct obj_void_t obj_void_t;
-typedef struct obj_i8_t obj_i8_t;
-typedef struct obj_u8_t obj_u8_t;
-typedef struct obj_i16_t obj_i16_t;
-typedef struct obj_u16_t obj_u16_t;
 typedef struct obj_i32_t obj_i32_t;
-typedef struct obj_u32_t obj_u32_t;
-typedef struct obj_i64_t obj_i64_t;
-typedef struct obj_u64_t obj_u64_t;
-typedef struct obj_r32_t obj_r32_t;
 typedef struct obj_r64_t obj_r64_t;
 typedef struct obj_symbol_t obj_symbol_t;
 typedef struct obj_string_t obj_string_t;
@@ -45,15 +38,8 @@ typedef enum obj_type_t {
     OBJ_TYPE_POINTER,
     OBJ_TYPE_BOOL,
     OBJ_TYPE_VOID,
-    OBJ_TYPE_I8,
-    OBJ_TYPE_U8,
-    OBJ_TYPE_I16,
-    OBJ_TYPE_U16,
     OBJ_TYPE_I32,
     OBJ_TYPE_U32,
-    OBJ_TYPE_I64,
-    OBJ_TYPE_U64,
-    OBJ_TYPE_R32,
     OBJ_TYPE_R64,
     OBJ_TYPE_SYMBOL,
     OBJ_TYPE_STRING,
@@ -78,16 +64,16 @@ typedef struct obj_t {
 
 void obj_init(obj_t* self, obj_type_t type);
 void obj_delete(obj_t* self);
-obj_type_t obj_get_type(const obj_t* self);
+obj_type_t obj_get_type(obj_t* self);
 
-void obj_to_string(const obj_t* self, obj_string_t* other);
-obj_ffi_t* obj_to_ffi(const obj_t* self);
-obj_t* obj_copy(const obj_t* self);
-bool obj_equal(const obj_t* self, const obj_t* other);
-bool obj_is_truthy(const obj_t* self);
-bool obj_is_eq(const obj_t* self, const obj_t* other);
-size_t obj_hash(const obj_t* self);
-obj_t* obj_eval(const obj_t* self, obj_env_t* env);
-obj_t* obj_apply(const obj_t* self, obj_t* args, obj_env_t* env);
+void obj_to_string(obj_t* self, obj_t* string);
+ffi_type* obj_to_ffi(obj_t* self);
+obj_t* obj_copy(obj_t* self);
+bool obj_is_equal(obj_t* self, obj_t* other);
+bool obj_is_truthy(obj_t* self);
+bool obj_is_eq(obj_t* self, obj_t* other);
+size_t obj_hash(obj_t* self);
+obj_t* obj_eval(obj_t* self, obj_t* env);
+obj_t* obj_apply(obj_t* self, obj_t* args, obj_t* env);
 
 #endif // OBJ_H

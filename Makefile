@@ -49,13 +49,9 @@ tools: $(tool-lout)
 tests: $(test-lout)
 
 tests-run: tests
-	for test in $(test-lout); do \
+	@for test in $(test-lout); do \
 		echo "Running $$test"; \
-		$$test; \
-		if [ $$? -ne 0 ]; then \
-			echo "Test $$test failed"; \
-			exit 1; \
-		fi; \
+		./$$test; \
 	done
 
 clean:

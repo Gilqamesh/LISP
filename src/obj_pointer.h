@@ -5,19 +5,21 @@
 
 typedef struct obj_pointer_t {
     obj_t base;
+    void* ptr;
 } obj_pointer_t;
 
-obj_pointer_t* obj_pointer_new();
-void obj_pointer_delete(obj_pointer_t* self);
+obj_t* obj_pointer_new(void* ptr);
+void obj_pointer_delete(obj_t* self);
 
-bool is_pointer(const obj_t* self);
-obj_ffi_t* obj_pointer_to_ffi(const obj_pointer_t* self);
-void obj_pointer_to_string(const obj_pointer_t* self, obj_string_t* str);
-obj_pointer_t* obj_pointer_copy(const obj_pointer_t* self);
-bool obj_pointer_equal(const obj_pointer_t* self, const obj_pointer_t* other);
-bool obj_pointer_is_truthy(const obj_pointer_t* self);
-size_t obj_pointer_hash(const obj_pointer_t* self);
-obj_t* obj_pointer_eval(const obj_pointer_t* self, obj_env_t* env);
-obj_t* obj_pointer_apply(const obj_pointer_t* self, obj_t* args, obj_env_t* env);
+bool is_pointer(obj_t* self);
+obj_pointer_t* obj_as_pointer(obj_t* self);
+ffi_type* obj_pointer_to_ffi(obj_t* self);
+void obj_pointer_to_string(obj_t* self, obj_t* string);
+obj_t* obj_pointer_copy(obj_t* self);
+bool obj_pointer_is_equal(obj_t* self, obj_t* other);
+bool obj_pointer_is_truthy(obj_t* self);
+size_t obj_pointer_hash(obj_t* self);
+obj_t* obj_pointer_eval(obj_t* self, obj_t* env);
+obj_t* obj_pointer_apply(obj_t* self, obj_t* args, obj_t* env);
 
 #endif // OBJ_POINTER_H

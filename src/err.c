@@ -4,7 +4,7 @@ static size_t stack_frames_top = 0;
 static size_t stack_frames_size = 0;
 static stack_frame_t* stack_frames;
 
-void err_throw(const void* context) {
+void err_throw(void* context) {
     assert(stack_frames_top && "throw called without matching begin_try");
     --stack_frames_top;
     stack_frames[stack_frames_top].context = context;
@@ -29,6 +29,6 @@ void err_end_try() {
     --stack_frames_top;
 }
 
-const void* err_catch_context() {
+void* err_catch_context() {
     return stack_frames[stack_frames_top].context;
 }

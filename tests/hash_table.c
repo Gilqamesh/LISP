@@ -4,34 +4,34 @@ int main(int argc, char** argv) {
     universe_init(argc, argv);
 
     try {
-        obj_hash_table_t* table = obj_hash_table_new();
+        obj_t* table = obj_hash_table_new();
 
         assert(obj_hash_table_size(table) == 0);
 
-        obj_t* key1 = (obj_t*)obj_string_new_cstr("key1");
+        obj_t* key1 = obj_string_new_cstr("key1");
         obj_hash_table_insert(table, key1, 0);
         assert(obj_hash_table_size(table) == 1);
 
-        obj_t* key2 = (obj_t*)obj_string_new_cstr("key2");
+        obj_t* key2 = obj_string_new_cstr("key2");
         obj_hash_table_insert(table, key2, 0);
         assert(obj_hash_table_size(table) == 2);
 
         hash_table_entry_t* entry = obj_hash_table_find(table, key1);
         assert(entry);
         assert(entry->is_taken);
-        assert(obj_equal(entry->key, key1));
+        assert(obj_is_equal(entry->key, key1));
 
         hash_table_entry_t* first = obj_hash_table_first(table);
         while (first) {
             assert(first->is_taken);
-            assert(obj_equal(entry->key, key1) || obj_equal(entry->key, key2));
+            assert(obj_is_equal(entry->key, key1) || obj_is_equal(entry->key, key2));
             first = obj_hash_table_next(table, first);
         }
 
         hash_table_entry_t* last = obj_hash_table_last(table);
         while (last) {
             assert(last->is_taken);
-            assert(obj_equal(entry->key, key1) || obj_equal(entry->key, key2));
+            assert(obj_is_equal(entry->key, key1) || obj_is_equal(entry->key, key2));
             last = obj_hash_table_prev(table, last);
         }
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         obj_t** keys = (obj_t**) malloc(size * sizeof(obj_string_t*));
 
         for (size_t i = 0; i < size; ++i) {
-            keys[i] = (obj_t*) obj_string_new_cstr("key%zu", i);
+            keys[i] = obj_string_new_cstr("key%zu", i);
         }
 
         srand(42);
@@ -75,8 +75,8 @@ int main(int argc, char** argv) {
 
         obj_hash_table_delete(table);
     } catch {
-        obj_t* err = (obj_t*) err_catch_context();
-        obj_string_t* str = obj_string_new();
+        obj_t* err = err_catch_context();
+        obj_t* str = obj_string_new();
         obj_to_string(err, str);
         printf("%s\n", obj_string_cstr(str));
         obj_string_delete(str);
